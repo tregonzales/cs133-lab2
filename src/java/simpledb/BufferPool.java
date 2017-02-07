@@ -29,6 +29,8 @@ public class BufferPool {
     /** TODO for Lab 4: create your private Lock Manager class. 
 	Be sure to instantiate it in the constructor. */
 
+    public Pages poolPages[];
+
     /**
      * Creates a BufferPool that caches up to numPages pages.
      *
@@ -36,6 +38,7 @@ public class BufferPool {
      */
     public BufferPool(int numPages) {
         //construct a buffer pool with numPages spaces for pages
+        poolPages = new Pages[numPages];
     }
     
     public static int getPageSize() {
@@ -57,7 +60,7 @@ public class BufferPool {
      * The retrieved page should be looked up in the buffer pool.  If it
      * is present, it should be returned.  If it is not present, it should
      * be added to the buffer pool and returned.  If there is insufficient
-     * space in the buffer pool, an page should be evicted and the new page
+     * space in the buffer pool, a page should be evicted and the new page
      * should be added in its place.
      *
      * @param tid the ID of the transaction requesting the page
@@ -66,6 +69,22 @@ public class BufferPool {
      */
     public  Page getPage(TransactionId tid, PageId pid, Permissions perm)
         throws TransactionAbortedException, DbException {
+
+        int emptySpace=poolPages.length+1;
+        for(int i=0; i<poolPages.length; i++) {
+            if(pid.equals(poolPages[i].getId())) {
+                return poolPages[i];
+            }
+            else if (poolPages[i]==null) {
+                //insert page at poolPages[i]
+                int tableId = pid.getTableId();
+                Catalog c = Database.getCatalog();
+                DbFile f = c.getDatabaseFile(tableId);
+                poolPages[i] = f.readPage(pid);
+                break;
+            }
+        }
+        
        //pseudocode follows
     //    if pid in DbFile.readPage
     //         return page

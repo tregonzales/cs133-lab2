@@ -31,14 +31,22 @@ public class Catalog {
         public int tableId;
 
 
-        public Table(Tuple t) {
-             
-            tableTupleDesc = t.getTupleDesc();
+        public Table(DbFile file, String name, String pkeyField) {
+
+            tableFile = file;
+            tablepKey = pkeyField;
+            tableName = name;
+            tableId = file.getId();
+            tableTupleDesc = file.getTupleDesc();
+
         }
     }
 
     //instance variable
     public ArrayList<Table> tableList;
+
+    //instance variable
+    public ArrayList<Integer> tabIds;
 
     /**
      * Constructor.
@@ -47,6 +55,8 @@ public class Catalog {
      */
     public Catalog() {
         tableList = new ArrayList<Table>(); 
+        tabIds = new ArrayList<Integer>();
+
     }
 
     /**
@@ -59,15 +69,31 @@ public class Catalog {
      * @param pkeyField the name of the primary key field
      */
     public void addTable(DbFile file, String name, String pkeyField) {
-        Table newTable;
-        newTable.tableId = name.hashCode();
-        newTable.tableTupleDesc = getTupleDesc(file.getId());
-        tableList.add(newTable);
+
+        if(tabIds.contains(file.getId())) {
+            for(Table x: tableList) {
+                if(file.getId() == x.tableId) {
+                    x.tableName = name;
+                }
+            }
+        }
+        else{
+            Table newTable = new Table(file, name, pkeyField);
+            tableList.add(newTable);
+            tabIds.add(file.getId());
+
+        }
+        
     }
 
     public void addTable(DbFile file, String name) {
+        
         addTable(file, name, null);
-        //do the same as above without use of primary key
+
+        // Table newTable = new Table(file, name, null);
+        // tableList.add(newTable);
+        // tabIds.add(file.getId());
+        
     }
 
     /**
@@ -78,9 +104,10 @@ public class Catalog {
      *    this file/tupledesc param for the calls getTupleDesc and getFile
      */
     public void addTable(DbFile file) {
-        addTable(file, (UUID.randomUUID()).toString());
-        //do the same as the first constructor but only creating a tuple, and then a table form that
-        //tuple and then adding it and then using the random id for the name of the table
+
+        addTable(file, null);
+
+        
     }
 
     /**
@@ -89,7 +116,12 @@ public class Catalog {
      */
     public int getTableId(String name) throws NoSuchElementException {
         
-        return name.hashCode();
+        for(Table x: tableList) {
+            if(x.tableName.equals(name)) {
+                return x.tableId;
+            }
+        }
+        throw new NoSuchElementException();
     }
 
     /**
@@ -99,8 +131,9 @@ public class Catalog {
      * @throws NoSuchElementException if the table doesn't exist
      */
     public TupleDesc getTupleDesc(int tableid) throws NoSuchElementException {
-        for(each x: tableList) {
-            if (tableId == x.tableId) {
+
+        for(Table x: tableList) {
+            if (tableid == x.tableId) {
                 return x.tableTupleDesc;
             }
         }
@@ -115,8 +148,8 @@ public class Catalog {
      */
     public DbFile getDatabaseFile(int tableid) throws NoSuchElementException {
 
-        for(each x: tableList) {
-            if (tableId == x.tableId) {
+        for(Table x: tableList) {
+            if (tableid == x.tableId) {
                 return x.tableFile;
             }
         }
@@ -125,8 +158,8 @@ public class Catalog {
 
     public String getPrimaryKey(int tableid) {
 
-        for(each x: tableList) {
-            if (tableId == x.tableId) {
+        for(Table x: tableList) {
+            if (tableid == x.tableId) {
                 return x.tablepKey;
             }
         }
@@ -135,13 +168,13 @@ public class Catalog {
     }
 
     public Iterator<Integer> tableIdIterator() {
-        // some code goes here
-        return null;
+        
+        return  tabIds.iterator();
     }
 
     public String getTableName(int id) {
 
-        for(each x: tableList) {
+        for(Table x: tableList) {
             if (id == x.tableId) {
                 return x.tableName;
             }
@@ -153,6 +186,7 @@ public class Catalog {
     /** Delete all tables from the catalog */
     public void clear() {
         this.tableList = new ArrayList<Table>();
+        this.tabIds = new ArrayList<Integer>();
     }
     
     /**
