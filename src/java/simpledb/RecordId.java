@@ -10,6 +10,12 @@ public class RecordId implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    //instance variable
+    public PageId pageId;
+
+    //instance variable
+    public int numTuple;
+
     /**
      * Creates a new RecordId referring to the specified PageId and tuple
      * number.
@@ -20,23 +26,24 @@ public class RecordId implements Serializable {
      *            the tuple number within the page.
      */
     public RecordId(PageId pid, int tupleno) {
-        // some code goes here
+        pageId = pid;
+        numTuple = tupleno;
     }
 
     /**
      * @return the tuple number this RecordId references.
      */
     public int tupleno() {
-        // some code goes here
-        return 0;
+        
+        return numTuple;
     }
 
     /**
      * @return the page id this RecordId references.
      */
     public PageId getPageId() {
-        // some code goes here
-        return null;
+        
+        return pageId;
     }
 
     /**
@@ -47,8 +54,15 @@ public class RecordId implements Serializable {
      */
     @Override
     public boolean equals(Object o) {
-        // some code goes here
-        throw new UnsupportedOperationException("implement this");
+        
+        RecordId r = (RecordId)o;
+        if(numTuple == r.numTuple) {
+            return true;
+        }
+        else {
+            return false;
+        }
+
     }
 
     /**
@@ -59,8 +73,9 @@ public class RecordId implements Serializable {
      */
     @Override
     public int hashCode() {
-        // some code goes here
-        throw new UnsupportedOperationException("implement this");
+
+        //the gonzales-mccarthy method
+        return 32768*numTuple;
 
     }
 

@@ -67,7 +67,7 @@ public class HeapPage implements Page {
     */
     private int getNumTuples() {        
         // some code goes here
-        return 0;
+        return tuples.length;
 
     }
 
@@ -77,8 +77,10 @@ public class HeapPage implements Page {
      */
     private int getHeaderSize() {        
         
-        // some code goes here
-        return 0;
+
+        int tuplesPerPage = floor( (Database.getBufferPool().getPageSize())*8 / (td.getSize() * 8 +1) );
+        int headerBytes = ceiling(tuplesPerPage/8);
+        return headerBytes;
                  
     }
     
@@ -111,8 +113,9 @@ public class HeapPage implements Page {
      * @return the PageId associated with this page.
      */
     public HeapPageId getId() {
-    // some code goes here
-    throw new UnsupportedOperationException("implement this");
+    
+    return pid;
+
     }
 
     /**
@@ -281,16 +284,31 @@ public class HeapPage implements Page {
      * Returns the number of empty slots on this page.
      */
     public int getNumEmptySlots() {
-        // some code goes here
-        return 0;
+        int loopLength = header.length * 8;
+        byte mask = 0x01;
+        int numEmptySlots = 0;
+        for (int i = 0; i < header.length; i++){
+
+            for (int j = 0; j < 8; j++){
+                int val = header[i] & mask; //remember to check if it returns a boolean!
+                numEmptySlots += !val;
+                header[i] >> 1;
+
+            }
+        }
+
+        return numEmptySlots;
     }
 
     /**
      * Returns true if associated slot on this page is filled.
      */
     public boolean isSlotUsed(int i) {
-        // some code goes here
-        return false;
+        int numBytes = i/8;
+        int numBits = i%8;
+        int shift = 7-numBits
+            
+            return !((header[numBytes] >> shift) & 0x01);
     }
 
     /**
@@ -299,6 +317,10 @@ public class HeapPage implements Page {
     private void markSlotUsed(int i, boolean value) {
         // some code goes here
         // not necessary for lab1
+    }
+
+    public class HeapPageIterator implements Iterator() {
+        
     }
 
     /**

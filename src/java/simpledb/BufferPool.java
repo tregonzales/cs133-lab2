@@ -70,20 +70,27 @@ public class BufferPool {
     public  Page getPage(TransactionId tid, PageId pid, Permissions perm)
         throws TransactionAbortedException, DbException {
 
-        int emptySpace=poolPages.length+1;
+       int emptySpace = poolPages.length+1;
+
         for(int i=0; i<poolPages.length; i++) {
             if(pid.equals(poolPages[i].getId())) {
                 return poolPages[i];
-            }
+            } 
             else if (poolPages[i]==null) {
-                //insert page at poolPages[i]
-                int tableId = pid.getTableId();
-                Catalog c = Database.getCatalog();
-                DbFile f = c.getDatabaseFile(tableId);
-                poolPages[i] = f.readPage(pid);
-                break;
+                emptySpace = i;
             }
         }
+            if(emptySpace == poolPages.length+1) {
+                throw new DbException();
+            }
+            else {
+            int tableId = pid.getTableId();
+            Catalog c = Database.getCatalog();
+            DbFile f = c.getDatabaseFile(tableId);
+            poolPages[emptySpace] = f.readPage(pid);
+            return poolPages[emptySpace];
+        }
+    }
         
        //pseudocode follows
     //    if pid in DbFile.readPage
@@ -94,7 +101,6 @@ public class BufferPool {
     //         else
     //             throw dbexception
     //         return page
-    return null;
     }
 
     /**
