@@ -56,7 +56,7 @@ public class RecordId implements Serializable {
     public boolean equals(Object o) {
         
         RecordId r = (RecordId)o;
-        if(numTuple == r.numTuple) {
+        if(numTuple == r.numTuple && pageId.equals(r.pageId)) {
             return true;
         }
         else {

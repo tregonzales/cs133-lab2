@@ -113,8 +113,11 @@ public class HeapPageReadTest extends SimpleDbTestBase {
     @Test public void getSlot() throws Exception {
         HeapPage page = new HeapPage(pid, EXAMPLE_DATA);
 
-        for (int i = 0; i < 20; ++i)
+        for (int i = 0; i < 20; ++i) {
+            //System.out.println(i);
             assertTrue(page.isSlotUsed(i));
+            //System.out.println(page.isSlotUsed(i)); 
+        }
 
         for (int i = 20; i < 504; ++i)
             assertFalse(page.isSlotUsed(i));

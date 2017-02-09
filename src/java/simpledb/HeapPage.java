@@ -1,6 +1,7 @@
 package simpledb;
 
 import java.util.*;
+import java.lang.Math;
 import java.io.*;
 
 /**
@@ -66,8 +67,9 @@ public class HeapPage implements Page {
         @return the number of tuples on this page
     */
     private int getNumTuples() {        
-        // some code goes here
-        return tuples.length;
+       
+       int tuplesPerPage = (Database.getBufferPool().getPageSize()*8) / (td.getSize() * 8 +1);
+       return tuplesPerPage;
 
     }
 
@@ -77,10 +79,9 @@ public class HeapPage implements Page {
      */
     private int getHeaderSize() {        
         
-
-        int tuplesPerPage = floor( (Database.getBufferPool().getPageSize())*8 / (td.getSize() * 8 +1) );
-        int headerBytes = ceiling(tuplesPerPage/8);
-        return headerBytes;
+        int tuplesPerPage = (Database.getBufferPool().getPageSize()*8) / (td.getSize() * 8 +1);
+        double headerBytes = Math.ceil( (double)tuplesPerPage / 8 );
+        return (int)headerBytes;
                  
     }
     
@@ -289,10 +290,13 @@ public class HeapPage implements Page {
         int numEmptySlots = 0;
         for (int i = 0; i < header.length; i++){
 
+            int headBits = (int)header[i];
+
             for (int j = 0; j < 8; j++){
-                int val = header[i] & mask; //remember to check if it returns a boolean!
-                numEmptySlots += !val;
-                header[i] >> 1;
+
+                int val = headBits & mask; //remember to check if it returns a boolean!
+                numEmptySlots += val^1;
+                headBits = headBits >> 1;
 
             }
         }
@@ -306,9 +310,17 @@ public class HeapPage implements Page {
     public boolean isSlotUsed(int i) {
         int numBytes = i/8;
         int numBits = i%8;
-        int shift = 7-numBits
-            
-            return !((header[numBytes] >> shift) & 0x01);
+        int shift = 7-numBits;
+        int headerBits = header[numBytes];    
+        int answer = ((headerBits >> shift) & 1);
+
+        if(answer == 1) {
+            return true;
+        }
+        else {
+            //System.out.println("false case" + i);
+            return false;
+        }
     }
 
     /**
@@ -319,18 +331,73 @@ public class HeapPage implements Page {
         // not necessary for lab1
     }
 
-    public class HeapPageIterator implements Iterator() {
-        
-    }
-
     /**
      * @return an iterator over all tuples on this page (calling remove on this iterator throws an UnsupportedOperationException)
      * (note that this iterator shouldn't return tuples in empty slots!)
      */
-    public Iterator<Tuple> iterator() {
-        // some code goes here
-        return null;
+        public Iterator<Tuple> iterator() {
+        
+        return (new HeapPageIterator());
+    }
+
+    public class HeapPageIterator implements Iterator<Tuple> {
+
+        private int cursor;
+
+        private int size = header.length * 8;
+
+        public HeapPageIterator() {
+            cursor = 0;
+        }
+
+        public boolean hasNext() {
+            if(cursor < size) {
+                if(isSlotUsed(cursor)) {
+                    return true;
+                }
+                else {
+                    for (int i = cursor; i < size; i++){
+                        if(isSlotUsed(i)){
+                            return true;
+                        }
+                        else{
+                            return false;
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
+        public Tuple next(){
+
+            int posChange = cursor;
+
+            if (!hasNext()){
+                throw new NoSuchElementException();
+            }
+            else{
+                for (int i = cursor; i < size; i++){
+                    if(isSlotUsed(i)){
+                        posChange = i;
+                        cursor = posChange + 1;
+                        break;
+                    }
+
+                }
+                
+            }
+            return tuples[posChange];
+
+        }
+
+        public void remove() {
+            throw new UnsupportedOperationException();
+        
     }
 
 }
+
+}
+
 

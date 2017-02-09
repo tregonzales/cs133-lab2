@@ -1,7 +1,6 @@
 package simpledb;
 
 import java.io.*;
-
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -29,7 +28,7 @@ public class BufferPool {
     /** TODO for Lab 4: create your private Lock Manager class. 
 	Be sure to instantiate it in the constructor. */
 
-    public Pages poolPages[];
+    public Page poolPages[];
 
     /**
      * Creates a BufferPool that caches up to numPages pages.
@@ -38,7 +37,7 @@ public class BufferPool {
      */
     public BufferPool(int numPages) {
         //construct a buffer pool with numPages spaces for pages
-        poolPages = new Pages[numPages];
+        poolPages = new Page[numPages];
     }
     
     public static int getPageSize() {
@@ -81,7 +80,7 @@ public class BufferPool {
             }
         }
             if(emptySpace == poolPages.length+1) {
-                throw new DbException();
+                throw new DbException("no more space");
             }
             else {
             int tableId = pid.getTableId();
@@ -92,16 +91,7 @@ public class BufferPool {
         }
     }
         
-       //pseudocode follows
-    //    if pid in DbFile.readPage
-    //         return page
-    //     else
-    //         if space in buffer pool (check if pages occupied < numPages)
-    //             add to buffer pool
-    //         else
-    //             throw dbexception
-    //         return page
-    }
+    
 
     /**
      * Releases the lock on a page.
@@ -232,3 +222,4 @@ public class BufferPool {
     }
 
 }
+

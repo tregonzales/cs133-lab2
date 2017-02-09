@@ -56,14 +56,24 @@ public class HeapPageId implements PageId {
      */
     public boolean equals(Object o) {
         
+        if(o == null) {
+            return false;
+        }
+        else if(!(o instanceof PageId)) {
+            return false;
+        }
+        else {
+
         PageId i = (PageId)o;
-        if(tabId == i.tabId && pageNum == i.pageNum) {
+        
+        if (tabId == i.getTableId() && pageNum == i.pageNumber()) {
             return true;
         }
         else {
             return false;
         }
     }
+}
 
     /**
      *  Return a representation of this object as an array of
