@@ -1,6 +1,7 @@
 package simpledb;
 
 import java.io.BufferedReader;
+
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -18,45 +19,25 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class Catalog {
 
-    public static class Table {
-
-        public TupleDesc tableTupleDesc;
-
-        public DbFile tableFile;
-
-        public String tableName;
-
-        public String tablepKey; 
-
-        public int tableId;
-
-
-        public Table(DbFile file, String name, String pkeyField) {
-
-            tableFile = file;
-            tablepKey = pkeyField;
-            tableName = name;
-            tableId = file.getId();
-            tableTupleDesc = file.getTupleDesc();
-
-        }
-    }
-
-    //instance variable
-    public ArrayList<Table> tableList;
-
-    //instance variable
-    public ArrayList<Integer> tabIds;
-
+    private final Map<Integer, DbFile> id2table;
+    private final Map<Integer, TupleDesc> id2tupledesc;
+    private final Map<String, Integer> name2id;
+    private final Map<Integer, String> id2name;
+    private final Map<Integer, String> pkey;
+	
     /**
      * Constructor.
      * Creates a new, empty catalog.
-     *
      */
     public Catalog() {
-        tableList = new ArrayList<Table>(); 
-        tabIds = new ArrayList<Integer>();
-
+        // some code goes here
+    	
+        id2table = new ConcurrentHashMap<Integer, DbFile>();
+        id2tupledesc = new ConcurrentHashMap<Integer, TupleDesc>();
+        name2id = new ConcurrentHashMap<String,Integer>();
+        id2name = new ConcurrentHashMap<Integer,String>();
+        pkey = new ConcurrentHashMap<Integer,String>();
+    	
     }
 
     /**
@@ -65,35 +46,27 @@ public class Catalog {
      * @param file the contents of the table to add;  file.getId() is the identfier of
      *    this file/tupledesc param for the calls getTupleDesc and getFile
      * @param name the name of the table -- may be an empty string.  May not be null.  If a name
-     * conflict exists, use the last table to be added as the table for a given name.
      * @param pkeyField the name of the primary key field
+     * conflict exists, use the last table to be added as the table for a given name.
      */
     public void addTable(DbFile file, String name, String pkeyField) {
+        // some code goes here
+		if (name2id.containsKey(name)) {
+			id2table.remove( name2id.get(name) );
+			id2tupledesc.remove( name2id.get(name) );
+			name2id.remove(name);
+		}
+		
+        id2tupledesc.put(file.getId(), file.getTupleDesc());
+        id2table.put(file.getId(), file);
+        name2id.put(name, file.getId());
+        id2name.put(file.getId(), name);
 
-        if(tabIds.contains(file.getId())) {
-            for(Table x: tableList) {
-                if(file.getId() == x.tableId) {
-                    x.tableName = name;
-                }
-            }
-        }
-        else{
-            Table newTable = new Table(file, name, pkeyField);
-            tableList.add(newTable);
-            tabIds.add(file.getId());
-
-        }
-        
+        pkey.put(file.getId(), pkeyField);
     }
 
     public void addTable(DbFile file, String name) {
-        
-        addTable(file, name, null);
-
-        // Table newTable = new Table(file, name, null);
-        // tableList.add(newTable);
-        // tabIds.add(file.getId());
-        
+        addTable(file, name, "");
     }
 
     /**
@@ -104,10 +77,7 @@ public class Catalog {
      *    this file/tupledesc param for the calls getTupleDesc and getFile
      */
     public void addTable(DbFile file) {
-
-        addTable(file, null);
-
-        
+        addTable(file, (UUID.randomUUID()).toString());
     }
 
     /**
@@ -115,13 +85,14 @@ public class Catalog {
      * @throws NoSuchElementException if the table doesn't exist
      */
     public int getTableId(String name) throws NoSuchElementException {
-        
-        for(Table x: tableList) {
-            if(x.tableName.equals(name)) {
-                return x.tableId;
-            }
+        // some code goes here
+        if (name==null)
+            throw new NoSuchElementException();
+        if (name2id.get(name) == null) {
+        	throw new NoSuchElementException();
         }
-        throw new NoSuchElementException();
+
+        return name2id.get(name).intValue();
     }
 
     /**
@@ -131,13 +102,8 @@ public class Catalog {
      * @throws NoSuchElementException if the table doesn't exist
      */
     public TupleDesc getTupleDesc(int tableid) throws NoSuchElementException {
-
-        for(Table x: tableList) {
-            if (tableid == x.tableId) {
-                return x.tableTupleDesc;
-            }
-        }
-        throw new NoSuchElementException();
+        // some code goes here
+    	return id2tupledesc.get(new Integer(tableid));
     }
 
     /**
@@ -147,46 +113,33 @@ public class Catalog {
      *     function passed to addTable
      */
     public DbFile getDatabaseFile(int tableid) throws NoSuchElementException {
-
-        for(Table x: tableList) {
-            if (tableid == x.tableId) {
-                return x.tableFile;
-            }
-        }
-        throw new NoSuchElementException();
+        // some code goes here
+    	return id2table.get(tableid);
     }
 
     public String getPrimaryKey(int tableid) {
-
-        for(Table x: tableList) {
-            if (tableid == x.tableId) {
-                return x.tablepKey;
-            }
-        }
-        throw new NoSuchElementException();
-    
+        // some code goes here
+    	return pkey.get(tableid);
     }
 
     public Iterator<Integer> tableIdIterator() {
-        
-        return  tabIds.iterator();
+        // some code goes here
+    	return id2table.keySet().iterator();
     }
 
     public String getTableName(int id) {
-
-        for(Table x: tableList) {
-            if (id == x.tableId) {
-                return x.tableName;
-            }
-        }
-        throw new NoSuchElementException();
+        // some code goes here
+    	return id2name.get(id);
     }
-    
     
     /** Delete all tables from the catalog */
     public void clear() {
-        this.tableList = new ArrayList<Table>();
-        this.tabIds = new ArrayList<Integer>();
+        // some code goes here
+        id2table.clear();
+        id2tupledesc.clear();
+        name2id.clear();
+        id2name.clear();
+        pkey.clear();
     }
     
     /**

@@ -9,6 +9,14 @@ public class Predicate implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    public int field_;
+
+    public Op op_;
+
+    public Field operand_;
+
+
+
     /** Constants used for return codes in Field.compare */
     public enum Op implements Serializable {
         EQUALS, GREATER_THAN, LESS_THAN, LESS_THAN_OR_EQ, GREATER_THAN_OR_EQ, LIKE, NOT_EQUALS;
@@ -55,7 +63,11 @@ public class Predicate implements Serializable {
      *            field value to compare passed in tuples to
      */
     public Predicate(int field, Op op, Field operand) {
-        // some code goes here
+        field_ = field;
+
+        op_ = op;
+
+        operand_ = operand;
     }
 
     /**
@@ -63,8 +75,7 @@ public class Predicate implements Serializable {
      */
     public int getField()
     {
-        // some code goes here
-        return -1;
+        return field_;
     }
 
     /**
@@ -72,8 +83,7 @@ public class Predicate implements Serializable {
      */
     public Op getOp()
     {
-        // some code goes here
-        return null;
+       return op_;
     }
     
     /**
@@ -81,8 +91,7 @@ public class Predicate implements Serializable {
      */
     public Field getOperand()
     {
-        // some code goes here
-        return null;
+        return operand_;
     }
     
     /**
@@ -96,8 +105,28 @@ public class Predicate implements Serializable {
      * @return true if the comparison is true, false otherwise.
      */
     public boolean filter(Tuple t) {
-        // some code goes here
-        return false;
+
+        Op operator = getOp();
+
+        //field number specified in constructor
+        int fieldNum = getField();
+        Field field = t.getField(fieldNum);
+
+        //field operand specified in constructor
+        Field operand = getOperand();
+
+
+
+        System.out.print(operand.compare(operator, field)); 
+        System.out.print(field);
+        System.out.print(operator);
+        System.out.println(operand);
+        
+
+        return (operand.compare(operator, field));
+
+        
+       
     }
 
     /**
@@ -105,7 +134,7 @@ public class Predicate implements Serializable {
      * operand_string
      */
     public String toString() {
-        // some code goes here
-        return "";
+    
+        return "f = " + field_ + "op = " + op_ + "operand = " + operand_; 
     }
 }

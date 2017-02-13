@@ -9,12 +9,9 @@ import java.io.Serializable;
 public class RecordId implements Serializable {
 
     private static final long serialVersionUID = 1L;
-
-    //instance variable
-    public PageId pageId;
-
-    //instance variable
-    public int numTuple;
+    
+    private final PageId pid;
+    private final int tupleno;
 
     /**
      * Creates a new RecordId referring to the specified PageId and tuple
@@ -26,24 +23,25 @@ public class RecordId implements Serializable {
      *            the tuple number within the page.
      */
     public RecordId(PageId pid, int tupleno) {
-        pageId = pid;
-        numTuple = tupleno;
+        // some code goes here
+        this.pid = pid;
+        this.tupleno = tupleno;
     }
 
     /**
      * @return the tuple number this RecordId references.
      */
     public int tupleno() {
-        
-        return numTuple;
+        // some code goes here
+    	return tupleno;
     }
 
     /**
      * @return the page id this RecordId references.
      */
     public PageId getPageId() {
-        
-        return pageId;
+        // some code goes here
+    	return pid;
     }
 
     /**
@@ -54,15 +52,12 @@ public class RecordId implements Serializable {
      */
     @Override
     public boolean equals(Object o) {
-        
-        RecordId r = (RecordId)o;
-        if(numTuple == r.numTuple && pageId.equals(r.pageId)) {
-            return true;
-        }
-        else {
-            return false;
-        }
-
+        // some code goes here
+    	 if (o != null && o instanceof RecordId) {
+             RecordId rid = (RecordId) o;
+             return pid.equals(rid.pid) && tupleno == rid.tupleno;
+         }
+         return false;
     }
 
     /**
@@ -73,9 +68,8 @@ public class RecordId implements Serializable {
      */
     @Override
     public int hashCode() {
-
-        //the gonzales-mccarthy method
-        return 32768*numTuple;
+        // some code goes here
+    	return tupleno << 16 + pid.hashCode();
 
     }
 

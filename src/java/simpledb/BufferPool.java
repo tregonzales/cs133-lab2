@@ -1,6 +1,7 @@
 package simpledb;
 
 import java.io.*;
+
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -18,17 +19,13 @@ public class BufferPool {
     /** Bytes per page, including header. */
     public static final int PAGE_SIZE = 4096;
 
-    private static int pageSize = PAGE_SIZE;
-
     /** Default number of pages passed to the constructor. This is used by
     other classes. BufferPool should use the numPages argument to the
     constructor instead. */
     public static final int DEFAULT_PAGES = 50;
-
-    /** TODO for Lab 4: create your private Lock Manager class. 
-	Be sure to instantiate it in the constructor. */
-
-    public Page poolPages[];
+    
+    final int numPages;   // number of pages -- currently, not enforced
+    final ConcurrentHashMap<PageId,Page> pages; // hash table storing current pages in memory
 
     /**
      * Creates a BufferPool that caches up to numPages pages.
@@ -36,19 +33,13 @@ public class BufferPool {
      * @param numPages maximum number of pages in this buffer pool.
      */
     public BufferPool(int numPages) {
-        //construct a buffer pool with numPages spaces for pages
-        poolPages = new Page[numPages];
+        // some code goes here
+    	this.numPages = numPages;
+        this.pages = new ConcurrentHashMap<PageId, Page>();
     }
     
     public static int getPageSize() {
-      return pageSize;
-    }
-
-    /**
-     * Helper: this should be used for testing only!!!
-     */
-    public static void setPageSize(int pageSize) {
-	BufferPool.pageSize = pageSize;
+      return PAGE_SIZE;
     }
 
     /**
@@ -59,7 +50,7 @@ public class BufferPool {
      * The retrieved page should be looked up in the buffer pool.  If it
      * is present, it should be returned.  If it is not present, it should
      * be added to the buffer pool and returned.  If there is insufficient
-     * space in the buffer pool, a page should be evicted and the new page
+     * space in the buffer pool, an page should be evicted and the new page
      * should be added in its place.
      *
      * @param tid the ID of the transaction requesting the page
@@ -68,30 +59,21 @@ public class BufferPool {
      */
     public  Page getPage(TransactionId tid, PageId pid, Permissions perm)
         throws TransactionAbortedException, DbException {
-
-       int emptySpace = poolPages.length+1;
-
-        for(int i=0; i<poolPages.length; i++) {
-            if(pid.equals(poolPages[i].getId())) {
-                return poolPages[i];
-            } 
-            else if (poolPages[i]==null) {
-                emptySpace = i;
+        // some code goes here
+    	Page p;
+        synchronized(this) {
+            p = pages.get(pid);
+            if(p == null) {
+                if(pages.size() >= numPages) {
+                    throw new DbException("Out of buffer pages");
+                }
+                
+                p = Database.getCatalog().getDatabaseFile(pid.getTableId()).readPage(pid);
+                pages.put(pid, p);
             }
         }
-            if(emptySpace == poolPages.length+1) {
-                throw new DbException("no more space");
-            }
-            else {
-            int tableId = pid.getTableId();
-            Catalog c = Database.getCatalog();
-            DbFile f = c.getDatabaseFile(tableId);
-            poolPages[emptySpace] = f.readPage(pid);
-            return poolPages[emptySpace];
-        }
+        return p;
     }
-        
-    
 
     /**
      * Releases the lock on a page.
@@ -193,7 +175,7 @@ public class BufferPool {
     */
     public synchronized void discardPage(PageId pid) {
         // some code goes here
-        // not necessary for labs 1--4
+        // only necessary for lab5
     }
 
     /**
@@ -209,7 +191,7 @@ public class BufferPool {
      */
     public synchronized  void flushPages(TransactionId tid) throws IOException {
         // some code goes here
-        // not necessary for labs 1--4
+        // not necessary for lab1|lab2
     }
 
     /**
@@ -221,9 +203,4 @@ public class BufferPool {
         // not necessary for lab1
     }
 
-<<<<<<< HEAD
 }
-=======
-}
-
->>>>>>> 921bdbf2d4cd5033f938b4661a5829132a671cb5
