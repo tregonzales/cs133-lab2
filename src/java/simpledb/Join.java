@@ -15,6 +15,8 @@ public class Join extends Operator {
 
     public DbIterator child2_;
 
+    public Tuple tuple1 = child1_.next();
+
 
 
     /**
@@ -44,7 +46,8 @@ public class Join extends Operator {
      *       alias or table name. Can be taken from the appropriate child's TupleDesc.
      * */
     public String getJoinField1Name() {
-        child1_.getTupleDesc();
+        //child1_.getTupleDesc();
+        return null;
     }
 
     /**
@@ -53,7 +56,8 @@ public class Join extends Operator {
      *       alias or table name. Can be taken from the appropriate child's TupleDesc.
      * */
     public String getJoinField2Name() {
-        child2_.getTupleDesc();
+        //child2_.getTupleDesc();
+        return null;
     }
 
     /**
@@ -68,17 +72,21 @@ public class Join extends Operator {
 
     public void open() throws DbException, NoSuchElementException,
             TransactionAbortedException {
-        child_.open();
+        child1_.open();
+        child2_.open();
         super.open();
+        
     }
 
     public void close() {
         super.close();
-        child_.close();
+        child1_.close();
+        child2_.close();
     }
 
     public void rewind() throws DbException, TransactionAbortedException {
-        child_.rewind();
+        child1_.rewind();
+        child2_.rewind();
     }
 
     /**
@@ -100,21 +108,24 @@ public class Join extends Operator {
      * @see JoinPredicate#filter
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
-        child1_.open();
-        child2_.open();
-
+       
+        Tuple newTuple;
         while(child1_.hasNext()){
-            Tuple tuple1 = child1_.next();
+            
             while(child2_.hasNext()){
                 Tuple tuple2 = child2_.next();
                 if (getJoinPredicate().filter(tuple1, tuple2)){
-                    return Tuple newTuple = new Tuple(getTupleDesc());
-                    //are we supposed to be returning a new tuple? or altering something that's there?
-                    //we could brute force our way into joining the tuples
+                    newTuple = new Tuple(getTupleDesc());
+                    return newTuple;
+                 
                 }
 
             }
+            child2_.rewind();
+            tuple1 = child1_.next(); //something with this
+            //counter flag thing? Tre's idea, some relation on the counter to determine what we call outer loop on
         }
+       return null;
     }
 
     /**
@@ -123,6 +134,8 @@ public class Join extends Operator {
     @Override
     public DbIterator[] getChildren() {
         // some code goes here
+        //return new DbIterator[] {this.child1_};
+        //return new DbIterator[] {this.child2_};
         return null;
     }
 
@@ -131,7 +144,9 @@ public class Join extends Operator {
      */
     @Override
     public void setChildren(DbIterator[] children) {
-        // some code goes here
-    }
+        //if (this.child_!=children[0]){
+            //this.child_=children[0];
+        }
+    
 
 }

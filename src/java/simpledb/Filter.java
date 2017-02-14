@@ -63,7 +63,7 @@ public class Filter extends Operator {
     protected Tuple fetchNext() throws NoSuchElementException,
             TransactionAbortedException, DbException {
        
-       child_.open();
+       //child_.open();
 
        while (child_.hasNext()){
            Tuple nextTuple = child_.next();
@@ -73,7 +73,7 @@ public class Filter extends Operator {
                 
        }
 
-       child_.close();
+       //child_.close();
        return null;
         
     }

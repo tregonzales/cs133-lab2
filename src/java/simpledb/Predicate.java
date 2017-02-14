@@ -117,13 +117,13 @@ public class Predicate implements Serializable {
 
 
 
-        System.out.print(operand.compare(operator, field)); 
-        System.out.print(field);
-        System.out.print(operator);
-        System.out.println(operand);
+        // System.out.print(operand.compare(operator, field)); 
+        // System.out.print(field);
+        // System.out.print(operator);
+        // System.out.println(operand);
         
 
-        return (operand.compare(operator, field));
+        return (field.compare(operator, operand));
 
         
        

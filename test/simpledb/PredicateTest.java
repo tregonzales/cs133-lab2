@@ -25,8 +25,14 @@ public class PredicateTest extends SimpleDbTestBase{
     for (int i : vals) {
       Predicate p = new Predicate(0, Predicate.Op.GREATER_THAN,
           TestUtil.getField(i));
+
+      // System.out.print(p.getOperand().compare(getOp(), TestUtil.getField(i))); 
+      // System.out.print(field);
+      //   System.out.print(operator);
+      //   System.out.println(operand);
       assertFalse(p.filter(Utility.getHeapTuple(i - 1)));
       assertFalse(p.filter(Utility.getHeapTuple(i)));
+
       assertTrue(p.filter(Utility.getHeapTuple(i + 1)));
     }
 
