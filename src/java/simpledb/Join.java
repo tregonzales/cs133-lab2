@@ -15,7 +15,7 @@ public class Join extends Operator {
 
     public DbIterator child2_;
 
-    public Tuple tuple1 = child1_.next();
+    public Tuple tuple1;
 
 
 
@@ -109,21 +109,46 @@ public class Join extends Operator {
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
        
+       int counter = 0;
         Tuple newTuple;
+        if (tuple1 == null){
+            tuple1 = child1_.next();
+        }
+
         while(child1_.hasNext()){
-            
+            if (child2_.hasNext()==false){
+                child2_.rewind();
+                tuple1 = child1_.next();
+            }
             while(child2_.hasNext()){
                 Tuple tuple2 = child2_.next();
                 if (getJoinPredicate().filter(tuple1, tuple2)){
+
                     newTuple = new Tuple(getTupleDesc());
+
+                    Iterator<Field> iter1 = tuple1.fields();
+                    Iterator<Field> iter2 = tuple2.fields();
+
+                    while(iter1.hasNext()){
+                        
+                        newTuple.setField(counter, iter1.next());
+                        counter++;
+                    }
+
+                    while(iter2.hasNext()){
+                        newTuple.setField(counter, iter2.next());
+                        counter++;
+                    }
+
+
+
                     return newTuple;
                  
                 }
 
             }
-            child2_.rewind();
-            tuple1 = child1_.next(); //something with this
-            //counter flag thing? Tre's idea, some relation on the counter to determine what we call outer loop on
+           
+            
         }
        return null;
     }
@@ -133,10 +158,10 @@ public class Join extends Operator {
      */
     @Override
     public DbIterator[] getChildren() {
-        // some code goes here
-        //return new DbIterator[] {this.child1_};
-        //return new DbIterator[] {this.child2_};
-        return null;
+        
+        return new DbIterator[] {this.child1_, this.child2_};
+        
+      
     }
 
     /**
@@ -144,9 +169,18 @@ public class Join extends Operator {
      */
     @Override
     public void setChildren(DbIterator[] children) {
-        //if (this.child_!=children[0]){
-            //this.child_=children[0];
+        if (this.child1_!=children[0]){
+            this.child1_=children[0];
+
         }
+
+        if (this.child2_!=children[1]){
+            this.child2_ = children[1];
+        }
+
+
     
+
+}
 
 }
