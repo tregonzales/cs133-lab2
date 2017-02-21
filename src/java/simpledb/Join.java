@@ -111,14 +111,21 @@ public class Join extends Operator {
        
        int counter = 0;
         Tuple newTuple;
-        if (tuple1 == null){
+        if (child1_.hasNext() && tuple1 == null){
             tuple1 = child1_.next();
         }
 
-        while(child1_.hasNext()){
+        while(tuple1!=null){
             if (child2_.hasNext()==false){
-                child2_.rewind();
-                tuple1 = child1_.next();
+
+            	if(child1_.hasNext()) {
+            		tuple1 = child1_.next();
+            		child2_.rewind();
+            	}
+            	else{
+            		tuple1=null;
+            	}
+
             }
             while(child2_.hasNext()){
                 Tuple tuple2 = child2_.next();
