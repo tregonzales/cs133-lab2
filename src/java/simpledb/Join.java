@@ -110,7 +110,7 @@ public class Join extends Operator {
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
        
        int counter = 0;
-        Tuple newTuple;
+       Tuple newTuple;
         if (child1_.hasNext() && tuple1 == null){
             tuple1 = child1_.next();
         }

@@ -1,4 +1,5 @@
 package simpledb;
+import java.util.*;
 
 /**
  * Computes some aggregate over a set of StringFields.
@@ -6,6 +7,25 @@ package simpledb;
 public class StringAggregator implements Aggregator {
 
     private static final long serialVersionUID = 1L;
+
+    public int gbfield_;
+
+    public Type gbfieldtype_;
+
+    public int afield_;
+
+    public Op what_;
+
+    public Map<Field, Tuple> agTups = new HashMap<Field, Tuple>();
+
+    //public Map<Field, Integer> counts = new HashMap<Field, Integer>();
+
+    public TupleDesc td;
+
+    public int agIndex;
+
+    public Field gbFieldKey;
+
 
     /**
      * Aggregate constructor
@@ -17,7 +37,10 @@ public class StringAggregator implements Aggregator {
      */
 
     public StringAggregator(int gbfield, Type gbfieldtype, int afield, Op what) {
-        // some code goes here
+        gbfield_ = gbfield;
+        gbfieldtype_ = gbfieldtype;
+        afield_=afield;
+        what_=what;
     }
 
     /**
@@ -25,8 +48,70 @@ public class StringAggregator implements Aggregator {
      * @param tup the Tuple containing an aggregate field and a group-by field
      */
     public void mergeTupleIntoGroup(Tuple tup) {
-        // some code goes here
+
+        gbFieldKey = tup.getField(gbfield_);
+        Tuple dis;
+
+        if (td == null) {
+
+            Type[] agTypes;
+            String[] agFields;
+            
+            if(gbfield_ == -1) {
+                agIndex = 0;
+                agTypes = new Type[1];
+                agFields = new String[1];
+            }
+            else{
+                agTypes = new Type[2];
+                agFields = new String[2];
+            }
+
+            if(agTypes.length == 2) {
+                agIndex = 1;
+                agTypes[0] = gbfieldtype_;
+                agTypes[1] = Type.INT_TYPE;
+
+                agFields[0] = gbFieldKey.toString();
+                agFields[1] = what_.toString();
+            }
+            else {
+                agTypes[0] = Type.INT_TYPE;
+                agFields[0] = what_.toString();
+            }
+
+                td = new TupleDesc(agTypes, agFields);
+                
+        }
+
+        if(!agTups.containsKey(gbFieldKey)) {
+
+            if(gbfield_ == -1) {
+                dis = new Tuple(td);
+                IntField dat = new IntField(1);
+                dis.setField(agIndex, dat);
+                agTups.put(gbFieldKey, dis);
+            }
+            else{
+                dis = new Tuple(td);
+                IntField dat = new IntField(1);
+                dis.setField(0, gbFieldKey);
+                dis.setField(agIndex, dat);
+                agTups.put(gbFieldKey, dis);
+            }
+
+        }
+        else{
+            Tuple dis1 = agTups.get(gbFieldKey);
+            int a = ((IntField)agTups.get(gbFieldKey).getField(agIndex)).getValue();
+            IntField dat1 = new IntField(a+1);
+            dis1.setField(agIndex, dat1);
+            agTups.put(gbFieldKey, dis1);
+        }
+
+
     }
+
 
     /**
      * Returns a DbIterator over group aggregate results.
@@ -37,8 +122,12 @@ public class StringAggregator implements Aggregator {
      *   aggregate specified in the constructor.
      */
     public DbIterator iterator() {
-        // some code goes here
-        throw new UnsupportedOperationException("please implement me for lab2");
+        
+        // Iterator<Tuple> ti = agTups.values().iterator();
+        // Iterable<Tuple> tat = ti;
+        TupleIterator plz = new TupleIterator(td, agTups.values());
+
+        return plz;
     }
 
 }
