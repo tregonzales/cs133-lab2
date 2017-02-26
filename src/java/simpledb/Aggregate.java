@@ -64,12 +64,14 @@ public class Aggregate extends Operator {
      *         {@link simpledb.Aggregator#NO_GROUPING}
      * */
     public int groupField() {
+
 	   if(gfield_ == -1) {
             return simpledb.Aggregator.NO_GROUPING;
        }
 	   else {
             return gfield_;
        }
+
     }
 
     /**
@@ -88,7 +90,8 @@ public class Aggregate extends Operator {
      * */
     public int aggregateField() {
 
-	return afield_;
+	   return afield_;
+
     }
 
     /**
@@ -106,16 +109,21 @@ public class Aggregate extends Operator {
      * */
     public Aggregator.Op aggregateOp() {
 
-	return aop_;
+	   return aop_;
+
     }
 
     public static String nameOfAggregatorOp(Aggregator.Op aop) {
-	return aop.toString();
+
+	   return aop.toString();
+
     }
 
     public void open() throws NoSuchElementException, DbException,
 	    TransactionAbortedException {
+
 	   super.open();
+
     }
 
     /**
@@ -143,7 +151,7 @@ public class Aggregate extends Operator {
                 gbType = curChild.getField(gfield_).getType();
                 intAg = new IntegerAggregator(gfield_, gbType ,afield_, aop_);
                 intAg.mergeTupleIntoGroup(curChild);
-                
+
                 while(child_.hasNext()) {
                     intAg.mergeTupleIntoGroup(child_.next());
                 }
@@ -162,20 +170,25 @@ public class Aggregate extends Operator {
             aggregated = true;
         }
 
-        if(agIter != null) {
-            if(agIter.hasNext()) {
-                return agIter.next();
-            }
-            else {
-                return null;
-            }
+        // if(agIter != null) {
+        //     if(agIter.hasNext()) {
+        //         return agIter.next();
+        //     }
+        //     else {
+        //         return null;
+        //     }
+        // }
+        if(agIter.hasNext()) {
+        return agIter.next();
         }
             
-	return null;
+	       return null;
     }
 
     public void rewind() throws DbException, TransactionAbortedException {
+
 	       child_.rewind();
+
     }
 
     /**
@@ -228,7 +241,9 @@ public class Aggregate extends Operator {
         }
 
     public void close() {
+
 	   super.close();
+
     }
 
     /**
@@ -247,7 +262,7 @@ public class Aggregate extends Operator {
     @Override
     public void setChildren(DbIterator[] children) {
 	   
-        if (this.child_!=children[0]){
+        if (this.child_!=children[0]) {
             this.child_=children[0];
         }
 
