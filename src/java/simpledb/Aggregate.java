@@ -170,14 +170,6 @@ public class Aggregate extends Operator {
             aggregated = true;
         }
 
-        // if(agIter != null) {
-        //     if(agIter.hasNext()) {
-        //         return agIter.next();
-        //     }
-        //     else {
-        //         return null;
-        //     }
-        // }
         if(agIter.hasNext()) {
         return agIter.next();
         }
