@@ -106,8 +106,34 @@ public class HeapFile implements DbFile {
 
     // see DbFile.java for javadocs
     public void writePage(Page page) throws IOException {
-        // some code goes here
-        // not necessary for lab1
+        HeapPage ourPage = (HeapPage) page;
+        HeapPageId id = ourPage.getId();
+       
+       
+        BufferedOutputStream bos = null;
+
+        try {
+            bos = new BufferedOutputStream(new FileOutputStream(f));
+            byte pageBuf[] = ourPage.getPageData();
+            // if (bos.skip(id.pageNumber() * BufferPool.PAGE_SIZE) != id
+            //         .pageNumber() * BufferPool.PAGE_SIZE) {
+            //     throw new IllegalArgumentException(
+            //             "Unable to seek to correct place in heapfile");
+            // }
+            bos.write(pageBuf, id.pageNumber(), BufferPool.PAGE_SIZE);
+        }
+        catch (IOException e) {
+            throw new RuntimeException(e);
+        } finally {
+            // Close the file on success or error
+            try {
+                if (bos != null)
+                    bos.close();
+            } catch (IOException ioe) {
+                // Ignore failures closing the file
+            }
+        }
+
     }
 
     /**
@@ -121,17 +147,73 @@ public class HeapFile implements DbFile {
     // see DbFile.java for javadocs
     public ArrayList<Page> insertTuple(TransactionId tid, Tuple t)
             throws DbException, IOException, TransactionAbortedException {
-        // some code goes here
-        return null;
-        // not necessary for lab1
+
+        ArrayList<Page> pageArray = new ArrayList<Page>();
+        int i;
+        for (i = 0; i < numPages(); i++) {
+                    HeapPageId curpid = new HeapPageId(getId(), i);
+                    HeapPage curp = (HeapPage) Database.getBufferPool().getPage(tid,
+                            curpid, Permissions.READ_WRITE);
+                    if (curp.getNumEmptySlots() > 0){
+                        curp.insertTuple(t);
+                        pageArray.add(curp);
+                        return pageArray;
+                    }
+
+        }
+        byte[] data = HeapPage.createEmptyPageData();
+        HeapPageId newPageId = new HeapPageId(getId(), numPages());
+        File ourFile = getFile();
+        FileOutputStream fw = null;
+        try{
+            fw = new FileOutputStream(ourFile, true);
+            fw.write(data);
+            HeapPage curp = (HeapPage) Database.getBufferPool().getPage(tid,
+                            newPageId, Permissions.READ_WRITE);
+            curp.insertTuple(t);
+            pageArray.add(curp);
+            return pageArray;
+        }
+        catch(IOException e){
+
+        }finally{
+            
+            fw.close();
+
+            
+        }
+    throw new DbException("Can't be added scrubs'");
+
     }
+    
 
     // see DbFile.java for javadocs
     public ArrayList<Page> deleteTuple(TransactionId tid, Tuple t) throws DbException,
             TransactionAbortedException {
-        // some code goes here
-        return null;
-        // not necessary for lab1
+        boolean treThing = true;
+        ArrayList<Page> pageArray = new ArrayList<Page>();
+        int i;
+        for (i = 0; i < numPages(); i++) {
+                    treThing = true;
+                    HeapPageId curpid = new HeapPageId(getId(), i);
+                    HeapPage curp = (HeapPage) Database.getBufferPool().getPage(tid,
+                            curpid, Permissions.READ_ONLY);
+                    // if (curp.getNumEmptySlots() > 0){
+                        try{
+                            curp.deleteTuple(t);
+                        }
+                        catch(DbException e){
+                            treThing = false;
+                        }
+                        if (treThing == true){
+                            pageArray.add(curp);
+                        }
+                        
+                return pageArray;
+                    
+
+        }
+        throw new DbException("It's not here, you fool'");
     }
 
     // see DbFile.java for javadocs

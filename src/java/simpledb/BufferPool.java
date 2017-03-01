@@ -1,6 +1,7 @@
 package simpledb;
 
 import java.io.*;
+import java.util.*;
 
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -135,8 +136,14 @@ public class BufferPool {
      */
     public void insertTuple(TransactionId tid, int tableId, Tuple t)
         throws DbException, IOException, TransactionAbortedException {
-        // some code goes here
-        // not necessary for lab1
+        
+        HeapFile ourFile = (HeapFile)(Database.getCatalog().getDatabaseFile(tableId));
+        ArrayList<Page> ourPages = ourFile.insertTuple(tid, t);
+        for (Page x: ourPages){
+            x.markDirty(true, tid);
+        }
+
+
     }
 
     /**
@@ -153,8 +160,30 @@ public class BufferPool {
      */
     public  void deleteTuple(TransactionId tid, Tuple t)
         throws DbException, IOException, TransactionAbortedException {
-        // some code goes here
-        // not necessary for lab1
+        
+        TupleDesc ourTupleDesc = t.getTupleDesc();
+        Iterator<Page> ourIterator = pages.values().iterator();
+        ArrayList<Page> ourPages = null;
+
+        HeapPage ourPage;
+        HeapFile ourFile;
+        PageId ourPid;
+
+        while(ourIterator.hasNext()){
+            ourPage = (HeapPage)(ourIterator.next());
+            ourPid = ourPage.getId();
+            ourFile = (HeapFile)(Database.getCatalog().getDatabaseFile(ourPid.getTableId()));
+
+            if(ourFile.getTupleDesc().equals(ourTupleDesc)){
+                ourPages = ourFile.deleteTuple(tid,t);
+            }     
+           
+        }
+       
+        for(Page x: ourPages){
+            x.markDirty(true, tid);
+        }  
+        
     }
 
     /**
@@ -163,8 +192,9 @@ public class BufferPool {
      *     break simpledb if running in NO STEAL mode.
      */
     public synchronized void flushAllPages() throws IOException {
-        // some code goes here
-        // not necessary for lab1
+        // check if is dirty 
+        //     if dirty, write
+        //     mark as not dirty
 
     }
 
@@ -183,8 +213,7 @@ public class BufferPool {
      * @param pid an ID indicating the page to flush
      */
     private synchronized  void flushPage(PageId pid) throws IOException {
-        // some code goes here
-        // not necessary for lab1
+        //write page to disk
     }
 
     /** Write all pages of the specified transaction to disk.
@@ -199,8 +228,7 @@ public class BufferPool {
      * Flushes the page to disk to ensure dirty pages are updated on disk.
      */
     private synchronized  void evictPage() throws DbException {
-        // some code goes here
-        // not necessary for lab1
+        // random af
     }
 
 }

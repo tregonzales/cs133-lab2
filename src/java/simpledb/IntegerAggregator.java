@@ -65,8 +65,10 @@ public class IntegerAggregator implements Aggregator {
     public void mergeTupleIntoGroup(Tuple tup) {
 
 
-       
-        gbFieldKey = tup.getField(gbfield_);
+       if(gbfield_ != -1){
+           gbFieldKey = tup.getField(gbfield_);
+       }
+        
 
         if (td == null) {
 

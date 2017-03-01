@@ -144,18 +144,27 @@ public class Aggregate extends Operator {
         
         if(!aggregated) {
             open();
+            child_.open();
             if(child_.hasNext()) {
                 curChild=child_.next();
             }
             if(curChild.getField(afield_).getType().equals(Type.INT_TYPE)) {
-                gbType = curChild.getField(gfield_).getType();
-                intAg = new IntegerAggregator(gfield_, gbType ,afield_, aop_);
-                intAg.mergeTupleIntoGroup(curChild);
+                if(gfield_==-1){
+                    intAg = new IntegerAggregator(gfield_, null ,afield_, aop_);
+                    intAg.mergeTupleIntoGroup(curChild);
+                }
+                else{
+                    gbType = curChild.getField(gfield_).getType();
+                    intAg = new IntegerAggregator(gfield_, gbType ,afield_, aop_);
+                    intAg.mergeTupleIntoGroup(curChild);
+                }
+                
 
                 while(child_.hasNext()) {
                     intAg.mergeTupleIntoGroup(child_.next());
                 }
                agIter = intAg.iterator();
+               agIter.open();
             }
             else if (curChild.getField(afield_).getType().equals(Type.STRING_TYPE)) {
                      gbType = curChild.getField(gfield_).getType();
@@ -166,6 +175,7 @@ public class Aggregate extends Operator {
                     stringAg.mergeTupleIntoGroup(child_.next());       
                 }
                 agIter = stringAg.iterator();
+                agIter.open();
             }
             aggregated = true;
         }
@@ -196,6 +206,7 @@ public class Aggregate extends Operator {
      */
     public TupleDesc getTupleDesc() {
 
+        
         int agIndex = afield_;
 
     	if (td == null) {
