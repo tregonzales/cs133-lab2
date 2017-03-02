@@ -30,22 +30,28 @@ public class Delete extends Operator {
     public Delete(TransactionId t, DbIterator child) {
         t_ = t;
         child_ = child;
-        Type[] typeArray = new Type[]{Type.INT_TYPE};
-        String[] stringArray = new String[]{"inserted tuples"};
-        td_ = new TupleDesc(typeArray, stringArray);
+        //Type[] typeArray = new Type[]{Type.INT_TYPE};
+        //String[] stringArray = new String[]{"inserted tuples"};
+        //td_ = new TupleDesc(typeArray, stringArray);
+        // td_ = new TupleDesc(typeArray);
     }
 
     public TupleDesc getTupleDesc() {
-        
-        return td_;
+        // Type[] typeArray = new Type[]{Type.INT_TYPE};
+        // td_ = new TupleDesc(typeArray);
+        // return td_;
+        return child_.getTupleDesc();
     }
 
     public void open() throws DbException, TransactionAbortedException {
         super.open();
+        child_.open();
     }
 
     public void close() {
+        child_.close();
         super.close();
+        
     }
     /**
      * You can just close and then open the child
@@ -67,29 +73,34 @@ public class Delete extends Operator {
      * @see BufferPool#deleteTuple
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
-       boolean treThing = true;
+       boolean deleteWorked = true;
        int count = 0;
        try{
            if (hasFetched == false){
             //count = 0;
-            child_.open();
+           // child_.open();
             hasFetched = true;
             
             while(child_.hasNext()){
-                treThing = true;
+                deleteWorked = true;
                 try{
                     Database.getBufferPool().deleteTuple(t_,child_.next());
                 }
                 catch(DbException e){
-                    treThing = false;
+                    deleteWorked = false;
                 }
-                if (treThing == true){
+                if (deleteWorked == true){
                      count++;
                 }
                
             }
-            
-            Tuple ourTuple = new Tuple(getTupleDesc());
+  
+            TupleDesc td;
+            Type[] typeArray = new Type[1];
+            typeArray[0] = Type.INT_TYPE;
+            td = new TupleDesc(typeArray);
+        
+            Tuple ourTuple = new Tuple(td);
             ourTuple.setField(0, new IntField(count));
             return ourTuple;
             }

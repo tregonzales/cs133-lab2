@@ -161,28 +161,37 @@ public class BufferPool {
     public  void deleteTuple(TransactionId tid, Tuple t)
         throws DbException, IOException, TransactionAbortedException {
         
-        TupleDesc ourTupleDesc = t.getTupleDesc();
-        Iterator<Page> ourIterator = pages.values().iterator();
+        // TupleDesc ourTupleDesc = t.getTupleDesc();
+        // Iterator<Page> ourIterator = pages.values().iterator();
         ArrayList<Page> ourPages = null;
 
-        HeapPage ourPage;
+        //HeapPage ourPage;
         HeapFile ourFile;
-        PageId ourPid;
+        //PageId ourPid;
 
-        while(ourIterator.hasNext()){
-            ourPage = (HeapPage)(ourIterator.next());
-            ourPid = ourPage.getId();
-            ourFile = (HeapFile)(Database.getCatalog().getDatabaseFile(ourPid.getTableId()));
+        int tabId = t.getRecordId().getPageId().getTableId();
 
-            if(ourFile.getTupleDesc().equals(ourTupleDesc)){
-                ourPages = ourFile.deleteTuple(tid,t);
-            }     
+        // while(ourIterator.hasNext()){
+        //     ourPage = (HeapPage)(ourIterator.next());
+        //     ourPid = ourPage.getId();
+            ourFile = (HeapFile)(Database.getCatalog().getDatabaseFile(tabId));
+
+        //     if(ourFile.getTupleDesc().equals(ourTupleDesc)){
+        //         ourPages = ourFile.deleteTuple(tid,t);
+        //     }     
            
-        }
+        // }
        
+        
+        ourPages = ourFile.deleteTuple(tid,t);
+
         for(Page x: ourPages){
             x.markDirty(true, tid);
         }  
+
+        //record id has page id has table id
+
+       
         
     }
 
@@ -192,6 +201,13 @@ public class BufferPool {
      *     break simpledb if running in NO STEAL mode.
      */
     public synchronized void flushAllPages() throws IOException {
+
+        for (all pages)
+        {
+            if dirty
+            flushPage(page)
+            markDirty(false);
+        }
         // check if is dirty 
         //     if dirty, write
         //     mark as not dirty
@@ -213,7 +229,12 @@ public class BufferPool {
      * @param pid an ID indicating the page to flush
      */
     private synchronized  void flushPage(PageId pid) throws IOException {
-        //write page to disk
+        Page p = pages.get(pid);
+        HeapPage hp = (HeapPage)p;
+        HeapPageId hpId = hp.getId();
+        int tableId = hpId.getTableId();
+        HeapFile ourFile = (HeapFile)(Database.getCatalog().getDatabaseFile(tableId));
+        ourFile.writePage(hp);
     }
 
     /** Write all pages of the specified transaction to disk.

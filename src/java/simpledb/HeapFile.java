@@ -18,7 +18,8 @@ public class HeapFile implements DbFile {
     private final File f;
     private final TupleDesc td;
     private final int tableid ;
-	
+	//private RandomAccessFile;
+
     /**
      * Constructs a heap file backed by the specified file.
      * 
@@ -106,33 +107,23 @@ public class HeapFile implements DbFile {
 
     // see DbFile.java for javadocs
     public void writePage(Page page) throws IOException {
+
+        //random access file
+        
         HeapPage ourPage = (HeapPage) page;
         HeapPageId id = ourPage.getId();
        
        
-        BufferedOutputStream bos = null;
+        
+        byte pageBuf[] = ourPage.getPageData();
+            
+       
 
-        try {
-            bos = new BufferedOutputStream(new FileOutputStream(f));
-            byte pageBuf[] = ourPage.getPageData();
-            // if (bos.skip(id.pageNumber() * BufferPool.PAGE_SIZE) != id
-            //         .pageNumber() * BufferPool.PAGE_SIZE) {
-            //     throw new IllegalArgumentException(
-            //             "Unable to seek to correct place in heapfile");
-            // }
-            bos.write(pageBuf, id.pageNumber(), BufferPool.PAGE_SIZE);
-        }
-        catch (IOException e) {
-            throw new RuntimeException(e);
-        } finally {
-            // Close the file on success or error
-            try {
-                if (bos != null)
-                    bos.close();
-            } catch (IOException ioe) {
-                // Ignore failures closing the file
-            }
-        }
+        RandomAccessFile ourRaf = new RandomAccessFile(f, "RW");
+        long offset = (long)(id.pageNumber() * BufferPool.PAGE_SIZE);
+        ourRaf.seek(offset);
+        ourRaf.write(pageBuf);
+
 
     }
 
