@@ -75,8 +75,10 @@ public class Delete extends Operator {
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
        boolean deleteWorked = true;
        int count = 0;
+
+       if (hasFetched == false){
        try{
-           if (hasFetched == false){
+           
             //count = 0;
            // child_.open();
             hasFetched = true;
@@ -85,6 +87,7 @@ public class Delete extends Operator {
                 deleteWorked = true;
                 try{
                     Database.getBufferPool().deleteTuple(t_,child_.next());
+                    //count++;
                 }
                 catch(DbException e){
                     deleteWorked = false;
@@ -105,12 +108,13 @@ public class Delete extends Operator {
             return ourTuple;
             }
        
-       }
+            catch(IOException e){
 
-       catch(IOException e){
+           } 
 
-       } 
-        
+        }
+
+              
        return null;
         
     }

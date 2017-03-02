@@ -66,7 +66,7 @@ public class BufferPool {
             p = pages.get(pid);
             if(p == null) {
                 if(pages.size() >= numPages) {
-                    throw new DbException("Out of buffer pages");
+                    evictPage();
                 }
                 
                 p = Database.getCatalog().getDatabaseFile(pid.getTableId()).readPage(pid);
@@ -160,39 +160,21 @@ public class BufferPool {
      */
     public  void deleteTuple(TransactionId tid, Tuple t)
         throws DbException, IOException, TransactionAbortedException {
-        
-        // TupleDesc ourTupleDesc = t.getTupleDesc();
-        // Iterator<Page> ourIterator = pages.values().iterator();
+            
         ArrayList<Page> ourPages = null;
 
-        //HeapPage ourPage;
         HeapFile ourFile;
-        //PageId ourPid;
 
         int tabId = t.getRecordId().getPageId().getTableId();
 
-        // while(ourIterator.hasNext()){
-        //     ourPage = (HeapPage)(ourIterator.next());
-        //     ourPid = ourPage.getId();
-            ourFile = (HeapFile)(Database.getCatalog().getDatabaseFile(tabId));
+        ourFile = (HeapFile)(Database.getCatalog().getDatabaseFile(tabId));
 
-        //     if(ourFile.getTupleDesc().equals(ourTupleDesc)){
-        //         ourPages = ourFile.deleteTuple(tid,t);
-        //     }     
-           
-        // }
-       
-        
         ourPages = ourFile.deleteTuple(tid,t);
 
         for(Page x: ourPages){
             x.markDirty(true, tid);
         }  
 
-        //record id has page id has table id
-
-       
-        
     }
 
     /**
@@ -202,16 +184,15 @@ public class BufferPool {
      */
     public synchronized void flushAllPages() throws IOException {
 
-        for (all pages)
-        {
-            if dirty
-            flushPage(page)
-            markDirty(false);
-        }
-        // check if is dirty 
-        //     if dirty, write
-        //     mark as not dirty
+        Iterator<Page> fIt = pages.values().iterator();
+        while(fIt.hasNext()) {
+            HeapPage p = (HeapPage)(fIt.next());
 
+            if(p.isDirty() != null) {
+                flushPage(p.getId());
+
+            }
+        }
     }
 
     /** Remove the specific page id from the buffer pool.
@@ -231,6 +212,7 @@ public class BufferPool {
     private synchronized  void flushPage(PageId pid) throws IOException {
         Page p = pages.get(pid);
         HeapPage hp = (HeapPage)p;
+        hp.markDirty(false, null);
         HeapPageId hpId = hp.getId();
         int tableId = hpId.getTableId();
         HeapFile ourFile = (HeapFile)(Database.getCatalog().getDatabaseFile(tableId));
@@ -249,7 +231,43 @@ public class BufferPool {
      * Flushes the page to disk to ensure dirty pages are updated on disk.
      */
     private synchronized  void evictPage() throws DbException {
-        // random af
+        
+
+        if(pages.size()<=0){
+            throw new DbException("nice try");
+        }
+
+        else{
+
+            boolean flushSuccess = false;
+
+            while(flushSuccess == false){
+
+            //idea for using "Random" class taken from stackoverflow   
+            
+                Random random = new Random();
+                List<PageId> pageIds = new ArrayList<PageId>(pages.keySet());
+                PageId randomId = pageIds.get(random.nextInt(pageIds.size()));
+                Page randomP = pages.get(randomId);
+
+            try{
+                flushPage(randomId);
+                flushSuccess = true;
+            }
+
+            catch(IOException i){
+                flushSuccess = false;
+            }
+            
+            if(flushSuccess){
+              pages.remove(randomId);  
+            }
+        
+        }
+        
     }
+}
 
 }
+
+

@@ -27,7 +27,7 @@ public class Aggregate extends Operator {
 
     public StringAggregator stringAg;
 
-    public DbIterator agIter;
+    public TupleIterator agIter;
 
     public TupleDesc td;
 
@@ -140,7 +140,7 @@ public class Aggregate extends Operator {
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
         
         Type gbType;
-
+        DbIterator temp;
         
         if(!aggregated) {
             open();
@@ -163,7 +163,8 @@ public class Aggregate extends Operator {
                 while(child_.hasNext()) {
                     intAg.mergeTupleIntoGroup(child_.next());
                 }
-               agIter = intAg.iterator();
+               temp = intAg.iterator();
+               agIter = (TupleIterator)temp;
                agIter.open();
             }
             else if (curChild.getField(afield_).getType().equals(Type.STRING_TYPE)) {
@@ -174,7 +175,8 @@ public class Aggregate extends Operator {
                 while(child_.hasNext()) {
                     stringAg.mergeTupleIntoGroup(child_.next());       
                 }
-                agIter = stringAg.iterator();
+                temp = stringAg.iterator();
+                agIter = (TupleIterator)temp;
                 agIter.open();
             }
             aggregated = true;
@@ -190,6 +192,10 @@ public class Aggregate extends Operator {
     public void rewind() throws DbException, TransactionAbortedException {
 
 	       child_.rewind();
+           if(agIter != null) {
+                agIter.rewind();
+           }
+           
 
     }
 
@@ -226,7 +232,7 @@ public class Aggregate extends Operator {
 
                 if(agTypes.length == 2) {
                     agIndex = 1;
-                    agTypes[0] = curChild.getField(gfield_).getType();
+                    agTypes[0] = child_.getTupleDesc().getFieldType(gfield_);
                     agTypes[1] = Type.INT_TYPE;
 
                     agFields[0] = groupFieldName();

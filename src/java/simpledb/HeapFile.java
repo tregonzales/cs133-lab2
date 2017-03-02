@@ -119,7 +119,7 @@ public class HeapFile implements DbFile {
             
        
 
-        RandomAccessFile ourRaf = new RandomAccessFile(f, "RW");
+        RandomAccessFile ourRaf = new RandomAccessFile(f, "rw");
         long offset = (long)(id.pageNumber() * BufferPool.PAGE_SIZE);
         ourRaf.seek(offset);
         ourRaf.write(pageBuf);
@@ -184,12 +184,11 @@ public class HeapFile implements DbFile {
         boolean treThing = true;
         ArrayList<Page> pageArray = new ArrayList<Page>();
         int i;
-        for (i = 0; i < numPages(); i++) {
-                    treThing = true;
-                    HeapPageId curpid = new HeapPageId(getId(), i);
-                    HeapPage curp = (HeapPage) Database.getBufferPool().getPage(tid,
-                            curpid, Permissions.READ_ONLY);
-                    // if (curp.getNumEmptySlots() > 0){
+
+        int tabId = t.getRecordId().getPageId().getTableId();
+        HeapPage curp = (HeapPage) Database.getBufferPool().getPage(tid,
+                            t.getRecordId().getPageId(), Permissions.READ_ONLY);
+        
                         try{
                             curp.deleteTuple(t);
                         }
@@ -198,12 +197,10 @@ public class HeapFile implements DbFile {
                         }
                         if (treThing == true){
                             pageArray.add(curp);
+                            return pageArray;
                         }
-                        
-                return pageArray;
-                    
 
-        }
+
         throw new DbException("It's not here, you fool'");
     }
 
