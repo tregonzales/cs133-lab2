@@ -32,8 +32,7 @@ public class JoinOptimizer {
      * specified statistics, and the provided left and right subplans. Note that
      * there is insufficient information to determine which plan should be the
      * inner/outer here -- because DbIterator's don't provide any cardinality
-     * estimates, and stats only has information about the base tables. For this
-     * reason, the plan1
+     * estimates, and stats only has information about the base tables.
      * 
      * @param lj
      *            The join being considered
@@ -104,12 +103,13 @@ public class JoinOptimizer {
             double cost1, double cost2) {
         if (j instanceof LogicalSubplanJoinNode) {
             // A LogicalSubplanJoinNode represents a subquery.
-            // You do not need to implement support for these for Lab 3.
+            // You do not need to implement support for these for Lab 3
+	    // Just finish the else case below
             return card1 + cost1 + cost2;
         } else {
             // Insert your code here.
 
-            // HINT: You likely only need to use the variable "j" if you implemented
+            // HINT: You may need to use the variable "j" if you implemented
             // a join algorithm that's more complicated than a basic
             // nested-loops join.
             return -1.0;
@@ -150,15 +150,18 @@ public class JoinOptimizer {
 
     /**
      * Estimate the join cardinality of two tables.
+     * For simple estimations, you will likely not use many of
+     * this method's arguments.
      * */
     public static int estimateTableJoinCardinality(Predicate.Op joinOp,
             String table1Alias, String table2Alias, String field1PureName,
             String field2PureName, int card1, int card2, boolean t1pkey,
             boolean t2pkey, Map<String, TableStats> stats,
             Map<String, Integer> tableAliasToId) {
-        int card = 1;
-        // some code goes here
-	
+
+	int card = 1;
+
+	// some code goes here
         return card <= 0 ? 1 : card;
     }
 
@@ -176,8 +179,7 @@ public class JoinOptimizer {
     public <T> Set<Set<T>> enumerateSubsets(Vector<T> v, int size) {
         Set<Set<T>> els = new HashSet<Set<T>>();
         els.add(new HashSet<T>());
-        // Iterator<Set> it;
-        // long start = System.currentTimeMillis();
+
 
         for (int i = 0; i < size; i++) {
             Set<Set<T>> newels = new HashSet<Set<T>>();
@@ -196,8 +198,7 @@ public class JoinOptimizer {
     }
 
     /**
-     * Compute a logical, reasonably efficient join on the specified tables. See
-     * PS4 for hints on how this should be implemented.
+     * Compute a logical, reasonably efficient join on the specified tables.
      * 
      * @param stats
      *            Statistics for each table involved in the join, referenced by
@@ -222,7 +223,8 @@ public class JoinOptimizer {
         //Not necessary for labs 1-2
 
         // some code goes here
-        //Replace the following
+
+	//Replace the following with the appropriate return
         return joins;
     }
 

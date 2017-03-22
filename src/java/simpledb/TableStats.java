@@ -12,18 +12,10 @@ import java.util.concurrent.ConcurrentHashMap;
  * This class is not needed in implementing lab1 and lab2.
  */
 public class TableStats {
-    // Note: scroll down a bit past the static methods to see the constructor you will implement
 
     private static final ConcurrentHashMap<String, TableStats> statsMap = new ConcurrentHashMap<String, TableStats>();
+
     static final int IOCOSTPERPAGE = 1000;
-
-    /**
-     * Number of bins for the histogram. Feel free to increase this value over
-     * 100, though our tests assume that you have at least 100 bins in your
-     * histograms.
-     */
-    static final int NUM_HIST_BINS = 100;
-
 
     public static TableStats getTableStats(String tablename) {
         return statsMap.get(tablename);
@@ -67,6 +59,12 @@ public class TableStats {
         System.out.println("Done.");
     }
 
+    /**
+     * Number of bins for the histogram. Feel free to increase this value over
+     * 100, though our tests assume that you have at least 100 bins in your
+     * histograms.
+     */
+    static final int NUM_HIST_BINS = 100;
 
     /**
      * Create a new TableStats object, that keeps track of statistics on each
@@ -86,6 +84,8 @@ public class TableStats {
         // You should try to do this reasonably efficiently, but you don't
         // necessarily have to (for example) do everything
         // in a single scan of the table.
+	// See project description for hint on using a Transaction
+	
         // some code goes here
     }
 
@@ -121,7 +121,6 @@ public class TableStats {
     }
 
     /**
-     * This method is not used in labs 1-4
      * The average selectivity of the field under op.
      * @param field
      *        the index of the field
@@ -130,6 +129,8 @@ public class TableStats {
      * The semantic of the method is that, given the table, and then given a
      * tuple, of which we do not know the value of the field, return the
      * expected selectivity. You may estimate this value from the histograms.
+     *
+     * Not necessary for lab 3
      * */
     public double avgSelectivity(int field, Predicate.Op op) {
         return 0.5;
