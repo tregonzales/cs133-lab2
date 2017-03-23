@@ -35,6 +35,8 @@ public class IntHistogramTest {
 		// Allow considerable leeway for rounding error, though 
 		// (Java double's are good to 15 or so significant figures)
 		Assert.assertTrue(selectivity > 0.99);
+		//System.out.println(selectivity);
+		
 	}
 	
 	/**
@@ -46,7 +48,9 @@ public class IntHistogramTest {
 		// All of the values here are negative.
 		// Also, there are more of them than there are bins.
 		for (int c = -60; c <= -10; c++) {
+			//System.out.println(c);
 			h.addValue(c);
+			
 			h.estimateSelectivity(Op.EQUALS, c);
 		}
 		

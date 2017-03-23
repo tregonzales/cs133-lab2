@@ -1,4 +1,5 @@
 package simpledb;
+import java.util.*;
 
 /** A class to represent a fixed-width histogram over a single integer-based field.
  */
@@ -7,7 +8,9 @@ public class IntHistogram {
     public int buckets_;
     public int min_;
     public int max_;
-    public Map<Integer, Integer> bucketMap;
+    public int numInBucket; //represents the number of values in the range of each bucket
+    public Integer[] bucketList;
+    public int ntups;
 
     /**
      * Create a new IntHistogram.
@@ -32,21 +35,63 @@ public class IntHistogram {
     	buckets_ = buckets;
         min_ = min;
         max_ = max;
-        bucketMap = new HashMap<Integer, Integer>();
+        bucketList = new Integer[buckets_];
+        for (int i=0; i < bucketList.length; i++)
+            bucketList[i] = 0;
+        ntups=0;
     }
 
     /**
      * Add a value to the set of values that you are keeping a histogram of.
      * @param v Value to add to the histogram
      */
-    public void addValue(int v) { //need to somehow create bucket system that can divide buckets with equal number of value representations
-        //possibly max-min/buckets to represent how many values per buckets (ceiling for uneven division)
-        //would assign v to ceiling of v/(ceiling max-min/buckets) then multiply by ceiling of max-min/buckets(numfields per buckets) and this
-        //represents the key as noted by the last value represented by such bucket
-    	
-        if(bucketMap.contains())
+    public void addValue(int v) { 
 
-    }
+     if(max_<min_) {
+
+     }
+     if(v>=min_ && v<=max_){
+         if (buckets_ == 0){
+            //do nothing
+        }
+        else{
+        ntups++;
+        int difference = max_-min_;
+
+        //this computes the number of values in the range that should go in the bucket.
+        //it's honestly just a sketchy way of computing ceiling(difference/buckets_) and then dividing that by buckets_
+        numInBucket = ((difference + buckets_ - 1)/buckets_);
+        
+            if (numInBucket == 0){
+                //do nothing
+            }
+            else{
+                //the index where we will add is the ceiling of v/buckets
+                //int ourIndex = (((v+numInBucket-1)/numInBucket)-1);
+
+                int ourIndex;
+                if (v == max_){
+                    ourIndex = buckets_ -1;
+                }
+                else{
+                    ourIndex = (v-min_)/numInBucket;
+                }
+                
+                
+
+                //int ourIndex = 5;
+                //add our value to the spot in the array corresponding to that index
+                bucketList[ourIndex]++;
+                
+            }
+       
+        }
+
+    
+}
+}
+ 
+    	
 
     /**
      * Estimate the selectivity of a particular predicate and operand on this table.
@@ -60,9 +105,116 @@ public class IntHistogram {
      */
     public double estimateSelectivity(Predicate.Op op, int v) {
 
-    	// some code goes here
-        return -1.0;
+    double result = 0.00;
+    int difference = max_-min_;
+    
+    if (buckets_!=0){
+        int numInThisBucket = ((difference + buckets_ - 1)/buckets_);
+        // System.out.println("numinBucket");
+        // System.out.println(numInThisBucket);
+        int thisIndex;
+                if (v == max_){
+                    thisIndex = buckets_ -1;
+                }
+                else{
+                    thisIndex = (v-min_)/numInBucket;
+                }
+
+        double b_right;
+        double b_part;
+        double heightsOfRest;
+        double b_left;
+
+    
+    if(v<=max_ && v>=min_){
+        // System.out.println("index before switch");
+        // System.out.println(thisIndex);
+        switch (op){
+        
+            case EQUALS: 
+                
+               result = ((double)bucketList[thisIndex] / numInThisBucket) / ntups;
+               break;
+
+            case LIKE:
+                
+               result = ((double)bucketList[thisIndex] / numInThisBucket) / ntups;
+               break;
+            
+            //why aren't we entering this case??
+            case GREATER_THAN:
+                System.out.println("greater_than case");
+                    // System.out.println(v);
+                    // System.out.println(min_);
+                if(v < min_){
+                    
+                    result = 1.00;
+                    break;
+
+                }
+                else if (v > max_){
+                    result = 0.00;
+                    break;
+                }
+                else{
+                    //difference betw v and min 
+                    //b_right = numInThisBucket * (thisIndex+1);
+                    b_right = min_ + numInThisBucket * thisIndex + (numInThisBucket - 1);
+                    b_part = (b_right - v)/numInThisBucket;
+                    heightsOfRest = 0.0;
+                    //System.out.println("before for loop");
+                    for(int i = thisIndex+1; i<bucketList.length; i++) {
+                        //System.out.println(i);
+                        heightsOfRest+=bucketList[i];
+                    }
+                    result = (b_part + heightsOfRest)/ntups;
+                    break;
+                } 
+                
+            case LESS_THAN:
+                System.out.println("less_than case");
+                b_left = min_ + numInThisBucket * thisIndex;
+                b_part = (v-b_left)/numInThisBucket;
+                heightsOfRest = 0.0;
+                for(int i = thisIndex-1; i >=0; i--) {
+                    heightsOfRest+=bucketList[i];
+                }
+                result = (b_part + heightsOfRest)/ntups;
+                break;
+            
+            case LESS_THAN_OR_EQ:
+                System.out.println("less_than or eq case");
+                b_left = numInThisBucket * thisIndex + 1;
+                b_part = ((v+1)-b_left)/numInThisBucket;
+                heightsOfRest = 0.0;
+                for(int i = thisIndex-1; i >=0; i--) {
+                    heightsOfRest+=bucketList[i];
+                }
+                result = (b_part + heightsOfRest)/ntups;
+                break;
+            
+            case GREATER_THAN_OR_EQ:
+                System.out.println("greater_than or eq case");
+                b_right = numInThisBucket * (thisIndex+1);
+                b_part = (b_right - v-1)/numInThisBucket;
+                heightsOfRest = 0.0;
+                for(int i = thisIndex+1; i<bucketList.length; i++) {
+                    heightsOfRest+=bucketList[i];
+                }
+                result = (b_part + heightsOfRest)/ntups;
+                break;
+                
+            case NOT_EQUALS:
+                result = 1-((double)bucketList[thisIndex] / numInThisBucket) / ntups;
+                break;
+
+        }
+            
     }
+    }
+    //System.out.println("about to return 0");
+    return result;
+}
     
     /**
      * @return
