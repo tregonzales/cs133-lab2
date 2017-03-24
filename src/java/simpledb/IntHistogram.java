@@ -125,8 +125,7 @@ public class IntHistogram {
         double b_left;
 
     
-    //dont do this range check here because then we wont enter the state 
-    //if(v<=max_ && v>=min_){
+ 
         // System.out.println("index before switch");
         // System.out.println(thisIndex);
             if(op.equals(Predicate.Op.EQUALS)) {
@@ -210,14 +209,14 @@ public class IntHistogram {
                 }
                 else{
                 b_right = min_ + numInThisBucket * thisIndex + (numInThisBucket - 1);
-                    b_part = ((b_right - v)+1)/numInThisBucket;
+                    b_part = (b_right - v)/numInThisBucket;
                     heightsOfRest = 0.0;
                     //System.out.println("before for loop");
                     for(int i = thisIndex+1; i<bucketList.length; i++) {
                         //System.out.println(i);
                         heightsOfRest+=bucketList[i];
                     }
-                    return (b_part + heightsOfRest)/ntups;
+                    return (b_part + heightsOfRest + ((double)bucketList[thisIndex] / numInThisBucket))/ntups;
                    
             }
                 
@@ -228,7 +227,7 @@ public class IntHistogram {
                 
             }
 
-        //}
+        
             
     }
     
