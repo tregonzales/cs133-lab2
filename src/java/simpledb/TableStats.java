@@ -90,24 +90,24 @@ public class TableStats {
 	
         //check if string or int histogram?
 
-        //get the DbFile
-        Database.getCatalog().getDatabaseFile(tableid);
-        //can create a heapFile with a file and a tupledesc
-        //HeapFile: numPages()
+        // //get the DbFile
+        // Database.getCatalog().getDatabaseFile(tableid);
+        // //can create a heapFile with a file and a tupledesc
+        // //HeapFile: numPages()
         
     
-        Transaction t = new Transaction(); 
-        t.start(); 
-        SeqScan s = new SeqScan(t.getId(), tableid, "t"); 
-        //getnumFields()
-        //getFieldType() for each of numbers
-        //keep track of mins and maxs
-        //min array and max array, correspond to histogram array
-        //make histograms with these min and max values
+        // Transaction t = new Transaction(); 
+        // t.start(); 
+        // SeqScan s = new SeqScan(t.getId(), tableid, "t"); 
+        // //getnumFields()
+        // //getFieldType() for each of numbers
+        // //keep track of mins and maxs
+        // //min array and max array, correspond to histogram array
+        // //make histograms with these min and max values
 
-        //scan each tuple again, get field, addvalue to histogram
-        //keep a counter of how many histograms we've populated
-        t.commit();
+        // //scan each tuple again, get field, addvalue to histogram
+        // //keep a counter of how many histograms we've populated
+        // t.commit();
 
 
         

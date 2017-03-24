@@ -105,7 +105,6 @@ public class IntHistogram {
      */
     public double estimateSelectivity(Predicate.Op op, int v) {
 
-    double result = 0.00;
     int difference = max_-min_;
     
     if (buckets_!=0){
@@ -126,35 +125,35 @@ public class IntHistogram {
         double b_left;
 
     
-    if(v<=max_ && v>=min_){
+    //dont do this range check here because then we wont enter the state 
+    //if(v<=max_ && v>=min_){
         // System.out.println("index before switch");
         // System.out.println(thisIndex);
-        switch (op){
-        
-            case EQUALS: 
-                
-               result = ((double)bucketList[thisIndex] / numInThisBucket) / ntups;
-               break;
+            if(op.equals(Predicate.Op.EQUALS)) {
+               return ((double)bucketList[thisIndex] / numInThisBucket) / ntups;
+               
+           }
 
-            case LIKE:
-                
-               result = ((double)bucketList[thisIndex] / numInThisBucket) / ntups;
-               break;
+           else if(op.equals(Predicate.Op.LIKE)){
+               return ((double)bucketList[thisIndex] / numInThisBucket) / ntups;
+               
+           }
             
             //why aren't we entering this case??
-            case GREATER_THAN:
+            else if(op.equals(Predicate.Op.GREATER_THAN)){
                 System.out.println("greater_than case");
                     // System.out.println(v);
                     // System.out.println(min_);
                 if(v < min_){
                     
-                    result = 1.00;
-                    break;
+                    return 1.00;
+                    
 
                 }
                 else if (v > max_){
-                    result = 0.00;
-                    break;
+
+                    return 0.00;
+                    
                 }
                 else{
                     //difference betw v and min 
@@ -167,11 +166,12 @@ public class IntHistogram {
                         //System.out.println(i);
                         heightsOfRest+=bucketList[i];
                     }
-                    result = (b_part + heightsOfRest)/ntups;
-                    break;
+                    return (b_part + heightsOfRest)/ntups;
+                   
                 } 
+            }
                 
-            case LESS_THAN:
+           else if(op.equals(Predicate.Op.LESS_THAN)) {
                 System.out.println("less_than case");
                 b_left = min_ + numInThisBucket * thisIndex;
                 b_part = (v-b_left)/numInThisBucket;
@@ -179,10 +179,10 @@ public class IntHistogram {
                 for(int i = thisIndex-1; i >=0; i--) {
                     heightsOfRest+=bucketList[i];
                 }
-                result = (b_part + heightsOfRest)/ntups;
-                break;
-            
-            case LESS_THAN_OR_EQ:
+                return (b_part + heightsOfRest)/ntups;
+                
+            }
+            else if(op.equals(Predicate.Op.LESS_THAN_OR_EQ)) {
                 System.out.println("less_than or eq case");
                 b_left = numInThisBucket * thisIndex + 1;
                 b_part = ((v+1)-b_left)/numInThisBucket;
@@ -190,30 +190,50 @@ public class IntHistogram {
                 for(int i = thisIndex-1; i >=0; i--) {
                     heightsOfRest+=bucketList[i];
                 }
-                result = (b_part + heightsOfRest)/ntups;
-                break;
-            
-            case GREATER_THAN_OR_EQ:
-                System.out.println("greater_than or eq case");
-                b_right = numInThisBucket * (thisIndex+1);
-                b_part = (b_right - v-1)/numInThisBucket;
-                heightsOfRest = 0.0;
-                for(int i = thisIndex+1; i<bucketList.length; i++) {
-                    heightsOfRest+=bucketList[i];
-                }
-                result = (b_part + heightsOfRest)/ntups;
-                break;
+                return (b_part + heightsOfRest)/ntups;
                 
-            case NOT_EQUALS:
-                result = 1-((double)bucketList[thisIndex] / numInThisBucket) / ntups;
-                break;
+            }
+            
+            if(op.equals(Predicate.Op.GREATER_THAN_OR_EQ)) {
+                System.out.println("greater_than or eq case");
 
-        }
+                 if(v < min_){
+                    
+                    return 1.00;
+                    
+
+                }
+                else if (v > max_){
+
+                    return 0.00;
+                    
+                }
+                else{
+                b_right = min_ + numInThisBucket * thisIndex + (numInThisBucket - 1);
+                    b_part = ((b_right - v)+1)/numInThisBucket;
+                    heightsOfRest = 0.0;
+                    //System.out.println("before for loop");
+                    for(int i = thisIndex+1; i<bucketList.length; i++) {
+                        //System.out.println(i);
+                        heightsOfRest+=bucketList[i];
+                    }
+                    return (b_part + heightsOfRest)/ntups;
+                   
+            }
+                
+            }
+                
+            else if(op.equals(Predicate.Op.NOT_EQUALS)){
+                return 1-((double)bucketList[thisIndex] / numInThisBucket) / ntups;
+                
+            }
+
+        //}
             
     }
-    }
+    
     //System.out.println("about to return 0");
-    return result;
+    return 0.0;
 }
     
     /**
