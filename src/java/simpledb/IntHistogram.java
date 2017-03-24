@@ -138,7 +138,6 @@ public class IntHistogram {
                
            }
             
-            //why aren't we entering this case??
             else if(op.equals(Predicate.Op.GREATER_THAN)){
                 System.out.println("greater_than case");
                     // System.out.println(v);
@@ -171,7 +170,20 @@ public class IntHistogram {
             }
                 
            else if(op.equals(Predicate.Op.LESS_THAN)) {
-                System.out.println("less_than case");
+               System.out.println("less_than case");
+
+                if(v < min_){
+                    
+                    return 0.00;
+                    
+
+                }
+                else if (v > max_){
+
+                    return 1.00;
+                    
+                }
+                
                 b_left = min_ + numInThisBucket * thisIndex;
                 b_part = (v-b_left)/numInThisBucket;
                 heightsOfRest = 0.0;
@@ -183,13 +195,26 @@ public class IntHistogram {
             }
             else if(op.equals(Predicate.Op.LESS_THAN_OR_EQ)) {
                 System.out.println("less_than or eq case");
+                 if(v < min_){
+                    
+                    return 0.00;
+                    
+
+                }
+                else if (v > max_){
+
+                    return 1.00;
+                    
+                }
                 b_left = numInThisBucket * thisIndex + 1;
-                b_part = ((v+1)-b_left)/numInThisBucket;
+                
+                b_part = (v-b_left)/numInThisBucket;
                 heightsOfRest = 0.0;
                 for(int i = thisIndex-1; i >=0; i--) {
                     heightsOfRest+=bucketList[i];
                 }
-                return (b_part + heightsOfRest)/ntups;
+                //return (b_part + heightsOfRest)/ntups;
+                return (b_part + heightsOfRest + ((double)bucketList[thisIndex] / numInThisBucket))/ntups;
                 
             }
             
