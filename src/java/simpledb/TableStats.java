@@ -68,6 +68,10 @@ public class TableStats {
      */
     static final int NUM_HIST_BINS = 100;
 
+    int numPages;
+    Map<Integer, IntHistogram> ih; 
+     Map<Integer, StringHistogram> sh;
+
     /**
      * Create a new TableStats object, that keeps track of statistics on each
      * column of a table
@@ -89,16 +93,101 @@ public class TableStats {
 	// See project description for hint on using a Transaction
 	
 
-        //get the DbFile
-        Database.getCatalog().getDatabaseFile(tableid);
+        //get the DbFile and relevant file info we need
+        DbFile d = Database.getCatalog().getDatabaseFile(tableid);
+        HeapFile f = new HeapFile(d, d.getTupleDesc());
+        TupleDesc td = f.getTupleDesc();
+        numPages = f.numPages();
+        int numFields = td.numFields();
+
+        //use field number in td as key, keeps track of mins and maxes and string values
+        Map<Integer, Integer> mins = new HashMap<Integer, Integer>();
+        Map<Integer, Integer> maxs = new HashMap<Integer, Integer>();
+
+        Map<Integer, ArrayList<Strings>> strings = new HashMap<Integer, ArrayList<Strings>>();
+
+        ih = new  HashMap<Integer, IntHistogram>();
+        sh = new  HashMap<Integer, StringHistogram>();
+
         //can create a heapFile with a file and a tupledesc
         //HeapFile: numPages()
-        
-    
+
         //most of the work done in this snippet
         Transaction t = new Transaction(); 
         t.start(); 
         SeqScan s = new SeqScan(t.getId(), tableid, "t"); 
+        Tuple curTup;
+
+        while(s.hasNext()) {
+
+            curTup = s.next();
+
+            for(int i=0; i<numFields; i++) {
+
+                if(curTup.getField(i).getType().equals(INT_TYPE)) {
+                    //check if key is there, if not place new min
+                    if(!mins.containsKey(i)) {
+                        mins.put(i, curTup.getField(i).getValue());
+                    }
+                    else if(curTup.getField(i).getValue() < mins.get(i)) {
+                        mins.put(i, curTup.getField(i).getValue());
+                    }
+                    //chck same thing for max
+                    if(!maxs.containsKey(i)) {
+                        maxs.put(i, curTup.getField(i).getValue());
+                    }
+                    else if(curTup.getField(i).getValue() > maxs.get(i)) {
+                        maxs.put(i, curTup.getField(i).getValue());
+                    }
+                }
+
+                //check if string map has something for this string field and then add appropriately
+
+                //commented this out because we have to scan the whole thing again to populate values so all
+                //we really need is to create and populate values on second scan, this loop only needs to happen
+                //for mins and maxs
+
+                // else {
+                //     if(!strings.containsKey(i)) {
+                //         strings.put(i, new ArrayList<Strings>());
+                //         strings.get(i).add(curTup.getField.getValue());
+                //     }
+                //     else{
+                //         strings.put(i, curTup.getField.getValue());
+                //     }
+                // }
+            }
+        }
+
+        s.rewind();
+
+            while(s.hasNext()) {
+
+                curTup = s.next();
+
+                for(int i=0; i<numFields; i++) {
+                    if(td.getFieldType(i).equals(INT_TYPE)) {
+
+                        if(!ih.containsKey(i)) {
+                            ih.put(i, new IntHistogram(NUM_HIST_BINS, mins.get(i), maxs.get(i)));
+                            ih.addValue(curTup.getField(i).getValue());
+                        }
+                        else {
+                            ih.addValue(curTup.getField(i).getValue());
+                        }
+                    }
+                    else {
+                        if(!sh.containsKey(i)) {
+                            sh.put(i, new IntHistogram(NUM_HIST_BINS);
+                            sh.addValue(curTup.getField(i).getValue());
+                        }
+                        else {
+                            sh.addValue(curTup.getField(i).getValue());
+                        }
+                    }
+                }
+            }
+
         //getnumFields()
         //getFieldType() for each of numbers
         //keep track of mins and maxs
