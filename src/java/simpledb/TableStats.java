@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.io.IOException;
 
 /**
  * TableStats represents statistics (e.g., histograms) about base tables in a
@@ -25,7 +26,7 @@ public class TableStats {
         statsMap.put(tablename, stats);
     }
 
-    //Frank's array of histograms with length numFields
+
     
     public static void setStatsMap(HashMap<String,TableStats> s)
     {
@@ -49,7 +50,7 @@ public class TableStats {
         return statsMap;
     }
 
-    public static void computeStatistics() {
+    public static void computeStatistics() throws IOException, DbException, TransactionAbortedException {
         Iterator<Integer> tableIt = Database.getCatalog().tableIdIterator();
 
         System.out.println("Computing table stats.");
@@ -68,9 +69,11 @@ public class TableStats {
      */
     static final int NUM_HIST_BINS = 100;
 
-    int numPages;
-    Map<Integer, IntHistogram> ih; 
-     Map<Integer, StringHistogram> sh;
+    public int numPages;
+    public int cost;
+    public Map<Integer, IntHistogram> ih; 
+    public Map<Integer, StringHistogram> sh;
+    public int numTuples=0;
 
     /**
      * Create a new TableStats object, that keeps track of statistics on each
@@ -82,20 +85,13 @@ public class TableStats {
      *            The cost per page of IO. This doesn't differentiate between
      *            sequential-scan IO and disk seeks.
      */
-    public TableStats(int tableid, int ioCostPerPage) {
-        // For this function, you'll have to get the
-        // DbFile for the table in question,
-        // then scan through its tuples and calculate
-        // the values that you need.
-        // You should try to do this reasonably efficiently, but you don't
-        // necessarily have to (for example) do everything
-        // in a single scan of the table.
-	// See project description for hint on using a Transaction
-	
+    public TableStats(int tableid, int ioCostPerPage) throws IOException, DbException, TransactionAbortedException {
 
-        //get the DbFile and relevant file info we need
+        try {
+       
+        cost=ioCostPerPage;
         DbFile d = Database.getCatalog().getDatabaseFile(tableid);
-        HeapFile f = new HeapFile(d, d.getTupleDesc());
+        HeapFile f = (HeapFile)d;
         TupleDesc td = f.getTupleDesc();
         numPages = f.numPages();
         int numFields = td.numFields();
@@ -103,8 +99,6 @@ public class TableStats {
         //use field number in td as key, keeps track of mins and maxes and string values
         Map<Integer, Integer> mins = new HashMap<Integer, Integer>();
         Map<Integer, Integer> maxs = new HashMap<Integer, Integer>();
-
-        Map<Integer, ArrayList<Strings>> strings = new HashMap<Integer, ArrayList<Strings>>();
 
         ih = new  HashMap<Integer, IntHistogram>();
         sh = new  HashMap<Integer, StringHistogram>();
@@ -117,45 +111,31 @@ public class TableStats {
         t.start(); 
         SeqScan s = new SeqScan(t.getId(), tableid, "t"); 
         Tuple curTup;
+        s.open();
 
         while(s.hasNext()) {
 
             curTup = s.next();
+            numTuples++;
 
             for(int i=0; i<numFields; i++) {
 
-                if(curTup.getField(i).getType().equals(INT_TYPE)) {
+                if(curTup.getField(i).getType().equals(Type.INT_TYPE)) {
                     //check if key is there, if not place new min
                     if(!mins.containsKey(i)) {
-                        mins.put(i, curTup.getField(i).getValue());
+                        mins.put(i, (((IntField)(curTup.getField(i)))).getValue());
                     }
-                    else if(curTup.getField(i).getValue() < mins.get(i)) {
-                        mins.put(i, curTup.getField(i).getValue());
+                    else if(((IntField)(curTup.getField(i))).getValue() < mins.get(i)) {
+                        mins.put(i, ((IntField)(curTup.getField(i))).getValue());
                     }
                     //chck same thing for max
                     if(!maxs.containsKey(i)) {
-                        maxs.put(i, curTup.getField(i).getValue());
+                        maxs.put(i, ((IntField)(curTup.getField(i))).getValue());
                     }
-                    else if(curTup.getField(i).getValue() > maxs.get(i)) {
-                        maxs.put(i, curTup.getField(i).getValue());
+                    else if(((IntField)(curTup.getField(i))).getValue() > maxs.get(i)) {
+                        maxs.put(i, ((IntField)(curTup.getField(i))).getValue());
                     }
                 }
-
-                //check if string map has something for this string field and then add appropriately
-
-                //commented this out because we have to scan the whole thing again to populate values so all
-                //we really need is to create and populate values on second scan, this loop only needs to happen
-                //for mins and maxs
-
-                // else {
-                //     if(!strings.containsKey(i)) {
-                //         strings.put(i, new ArrayList<Strings>());
-                //         strings.get(i).add(curTup.getField.getValue());
-                //     }
-                //     else{
-                //         strings.put(i, curTup.getField.getValue());
-                //     }
-                // }
             }
         }
 
@@ -166,37 +146,39 @@ public class TableStats {
                 curTup = s.next();
 
                 for(int i=0; i<numFields; i++) {
-                    if(td.getFieldType(i).equals(INT_TYPE)) {
+                    if(td.getFieldType(i).equals(Type.INT_TYPE)) {
 
                         if(!ih.containsKey(i)) {
                             ih.put(i, new IntHistogram(NUM_HIST_BINS, mins.get(i), maxs.get(i)));
-                            ih.addValue(curTup.getField(i).getValue());
+                            ih.get(i).addValue(((IntField)(curTup.getField(i))).getValue());
                         }
                         else {
-                            ih.addValue(curTup.getField(i).getValue());
+                            ih.get(i).addValue(((IntField)(curTup.getField(i))).getValue());
                         }
                     }
                     else {
                         if(!sh.containsKey(i)) {
-                            sh.put(i, new IntHistogram(NUM_HIST_BINS);
-                            sh.addValue(curTup.getField(i).getValue());
+                            sh.put(i, new StringHistogram(NUM_HIST_BINS));
+                            sh.get(i).addValue(((StringField)(curTup.getField(i))).getValue());
                         }
                         else {
-                            sh.addValue(curTup.getField(i).getValue());
+                            sh.get(i).addValue(((StringField)(curTup.getField(i))).getValue());
                         }
                     }
                 }
             }
-
-        //getnumFields()
-        //getFieldType() for each of numbers
-        //keep track of mins and maxs
-        //min array and max array, correspond to histogram array
-        //make histograms with these min and max values
-
-        //scan each tuple again, get field, addvalue to histogram
-        //keep a counter of how many histograms we've populated
         t.commit();
+    }
+    catch (DbException ex) {
+        throw ex;
+    }
+    catch (TransactionAbortedException ex) {
+        throw ex;
+
+     }
+     catch (IOException ex) {
+         throw ex;
+     }
 
 
         
@@ -216,8 +198,8 @@ public class TableStats {
      * @return The estimated cost of scanning the table.
      */
     public double estimateScanCost() {
-        //call our selectivity function
-        return 0;
+
+        return (double)(numPages*cost);
     }
 
     /**
@@ -231,7 +213,7 @@ public class TableStats {
      */
     public int estimateTableCardinality(double selectivityFactor) {
         // some code goes here
-        return 0;
+        return (int)(selectivityFactor*numTuples);
     }
 
     /**
@@ -264,8 +246,14 @@ public class TableStats {
      *         predicate
      */
     public double estimateSelectivity(int field, Predicate.Op op, Field constant) {
-        // some code goes here
-        return 1.0;
+        
+        if(constant.getType().equals(Type.INT_TYPE)) {
+            return ih.get(field).estimateSelectivity(op, ((IntField)constant).getValue());
+        }
+        else {
+            return sh.get(field).estimateSelectivity(op, ((StringField)constant).getValue());
+        }
+      
     }
 
     /**
@@ -273,7 +261,7 @@ public class TableStats {
      * */
     public int totalTuples() {
         // some code goes here
-        return 0;
+        return numTuples;
     }
 
 }

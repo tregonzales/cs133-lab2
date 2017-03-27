@@ -124,10 +124,7 @@ public class IntHistogram {
         double heightsOfRest;
         double b_left;
 
-    
- 
-        // System.out.println("index before switch");
-        // System.out.println(thisIndex);
+
             if(op.equals(Predicate.Op.EQUALS)) {
                return ((double)bucketList[thisIndex] / numInThisBucket) / ntups;
                
@@ -139,9 +136,7 @@ public class IntHistogram {
            }
             
             else if(op.equals(Predicate.Op.GREATER_THAN)){
-                System.out.println("greater_than case");
-                    // System.out.println(v);
-                    // System.out.println(min_);
+
                 if(v < min_){
                     
                     return 1.00;
@@ -170,8 +165,7 @@ public class IntHistogram {
             }
                 
            else if(op.equals(Predicate.Op.LESS_THAN)) {
-               System.out.println("less_than case");
-
+              
                 if(v < min_){
                     
                     return 0.00;
@@ -194,7 +188,7 @@ public class IntHistogram {
                 
             }
             else if(op.equals(Predicate.Op.LESS_THAN_OR_EQ)) {
-                System.out.println("less_than or eq case");
+           
                  if(v < min_){
                     
                     return 0.00;
@@ -219,7 +213,6 @@ public class IntHistogram {
             }
             
             if(op.equals(Predicate.Op.GREATER_THAN_OR_EQ)) {
-                System.out.println("greater_than or eq case");
 
                  if(v < min_){
                     
