@@ -126,11 +126,17 @@ public class IntHistogram {
 
 
             if(op.equals(Predicate.Op.EQUALS)) {
+                if(v < min_ || v > max_){
+                    return 0.0;
+                }
                return ((double)bucketList[thisIndex] / numInThisBucket) / ntups;
                
            }
 
            else if(op.equals(Predicate.Op.LIKE)){
+               if(v < min_ || v > max_){
+                    return 0.0;
+                }
                return ((double)bucketList[thisIndex] / numInThisBucket) / ntups;
                
            }
@@ -241,6 +247,9 @@ public class IntHistogram {
             }
                 
             else if(op.equals(Predicate.Op.NOT_EQUALS)){
+                if(v < min_ || v > max_){
+                    return 1.0;
+                }
                 return 1-((double)bucketList[thisIndex] / numInThisBucket) / ntups;
                 
             }
