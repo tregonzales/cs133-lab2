@@ -252,12 +252,31 @@ public class JoinOptimizer {
             HashMap<String, TableStats> stats,
             HashMap<String, Double> filterSelectivities, boolean explain)
             throws ParsingException {
-        //Not necessary for labs 1-2
-
-        // some code goes here
-
-	//Replace the following with the appropriate return
-        return joins;
+    //joins
+    PlanCache ourPlanCache = new PlanCache();
+    CostCard bestPlan = new CostCard();
+    CostCard plan = new CostCard();
+    bestPlan.cost = 0;
+    
+    for (int i = 1; i<joins.size(); i++){
+         Set<Set<LogicalJoinNode>> subSets = enumerateSubsets(joins, i);
+         for (Set<LogicalJoinNode> s1: subSets){
+             bestPlan = null;  // We want to find the best plan for this concrete subset 
+             //Set<LogicalJoinNode> subSets2 = enumerateSubsets(joins, i-1);
+            for (LogicalJoinNode s2: s1){
+                plan = computeCostAndCardOfSubplan(stats, filterSelectivities, s2, s1, bestPlan.cost, ourPlanCache);
+                if (plan.cost < bestPlan.cost)
+                    bestPlan = plan;
+                    ourPlanCache.addPlan(s1, bestPlan.cost, bestPlan.card, bestPlan.plan);
+            }
+                
+            
+         } // Looking at a concrete subset of joins
+            
+    }   
+    Vector<LogicalJoinNode> ourVector = bestPlan.plan;
+    return ourVector;
+    //eturn optjoin(j)
     }
 
     // ===================== Private Methods =================================
