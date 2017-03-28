@@ -264,14 +264,17 @@ public class JoinOptimizer {
              bestPlan = null;  // We want to find the best plan for this concrete subset 
              //Set<LogicalJoinNode> subSets2 = enumerateSubsets(joins, i-1);
             for (LogicalJoinNode s2: s1){
-                plan = computeCostAndCardOfSubplan(stats, filterSelectivities, s2, s1, bestPlan.cost, ourPlanCache);
-                if (plan.cost < bestPlan.cost)
+                if(computeCostAndCardOfSubplan(stats, filterSelectivities, s2, s1, bestPlan.cost, ourPlanCache) != null) {
+                    plan = computeCostAndCardOfSubplan(stats, filterSelectivities, s2, s1, bestPlan.cost, ourPlanCache);
+                
+                    if (plan.cost < bestPlan.cost)
                     bestPlan = plan;
-                    ourPlanCache.addPlan(s1, bestPlan.cost, bestPlan.card, bestPlan.plan);
+                } 
+                
             }
                 
-            
-         } // Looking at a concrete subset of joins
+            ourPlanCache.addPlan(s1, bestPlan.cost, bestPlan.card, bestPlan.plan);
+         } 
             
     }   
     Vector<LogicalJoinNode> ourVector = bestPlan.plan;
