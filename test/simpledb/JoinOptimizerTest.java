@@ -267,6 +267,7 @@ public class JoinOptimizerTest extends SimpleDbTestBase {
 		
 		// There are only three join nodes; if you're only re-ordering the join nodes,
 		// you shouldn't end up with more than you started with
+
 		Assert.assertEquals(result.size(), nodes.size());
 		
 		// There were a number of ways to do the query in this quiz, reasonably well;

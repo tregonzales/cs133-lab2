@@ -253,33 +253,41 @@ public class JoinOptimizer {
             HashMap<String, Double> filterSelectivities, boolean explain)
             throws ParsingException {
     //joins
+    Vector<LogicalJoinNode> ourBestPlan;
     PlanCache ourPlanCache = new PlanCache();
     CostCard bestPlan = new CostCard();
     CostCard plan = new CostCard();
-    bestPlan.cost = 0;
+    bestPlan.cost = Double.MAX_VALUE;
+    Set<Set<LogicalJoinNode>> subSets;
     
-    for (int i = 1; i<joins.size(); i++){
-         Set<Set<LogicalJoinNode>> subSets = enumerateSubsets(joins, i);
+    for (int i = 1; i<=joins.size(); i++){
+         bestPlan.cost = Double.MAX_VALUE;
+         subSets = enumerateSubsets(joins, i);
          for (Set<LogicalJoinNode> s1: subSets){
-             bestPlan = null;  // We want to find the best plan for this concrete subset 
-             //Set<LogicalJoinNode> subSets2 = enumerateSubsets(joins, i-1);
-            for (LogicalJoinNode s2: s1){
+            for (LogicalJoinNode s2: s1){ 
                 if(computeCostAndCardOfSubplan(stats, filterSelectivities, s2, s1, bestPlan.cost, ourPlanCache) != null) {
                     plan = computeCostAndCardOfSubplan(stats, filterSelectivities, s2, s1, bestPlan.cost, ourPlanCache);
-                
-                    if (plan.cost < bestPlan.cost)
+                    if (plan.cost < bestPlan.cost) {
                     bestPlan = plan;
+                    ourPlanCache.addPlan(s1, bestPlan.cost, bestPlan.card, bestPlan.plan);
+                    }
                 } 
-                
-            }
-                
-            ourPlanCache.addPlan(s1, bestPlan.cost, bestPlan.card, bestPlan.plan);
-         } 
-            
+            }     
+         }      
     }   
-    Vector<LogicalJoinNode> ourVector = bestPlan.plan;
-    return ourVector;
-    //eturn optjoin(j)
+
+    Set<Set<LogicalJoinNode>> ourSubset = enumerateSubsets(joins,joins.size());
+    Set<LogicalJoinNode> theSet = null;
+    Iterator<Set<LogicalJoinNode>> iter=ourSubset.iterator();
+    theSet = iter.next();
+    ourBestPlan = ourPlanCache.getOrder(theSet);
+
+    if (explain) {
+        printJoins(ourBestPlan, ourPlanCache, stats, filterSelectivities);
+    }
+    //return ourPlanCache.getOrder()
+    return ourBestPlan;
+    
     }
 
     // ===================== Private Methods =================================
