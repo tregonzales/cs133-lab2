@@ -1,0 +1,21 @@
+Julia McCarthy and Frank (Tre) Gonzales
+
+Exercise 1
+
+Question 1:
+Due to the fact that the from clause contains 3 relations(tables), we believe there would be numFields in S1 * numFields in S2 * numFields in E LogicalJoinNodes.
+
+Because there are 3 aliased tables, there will be 3 LogicalScanNodes.
+
+Because there are 3 filters specified in the where clause, there will be 3 LogicalFilterNodes.
+
+Question 2:
+The return type of physicalPlan() is DbIterator because it needs to give us the output fields and output types that we are to traverse through and filter.  A DbIterator is an easy way to give us all this information at once. 
+
+Question 3: 
+
+It seems that each entry in the subPlanMap represents the table we are filtering through (identified by its alias).
+
+Writeup:
+
+We have not made any changes to the API. We worked together on all aspects of the code even though Frank (Tre) got a girlfriend from Scripps and sometimes has less time to spend on code but that’s ok. We spend about 16 hours total on this assignment. OrderJoins was hard because we needed to use a lot auxiliary methods that we were not familiar with, but it was satisfying in the end.
