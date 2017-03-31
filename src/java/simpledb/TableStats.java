@@ -50,7 +50,7 @@ public class TableStats {
         return statsMap;
     }
 
-    public static void computeStatistics() throws IOException, DbException, TransactionAbortedException {
+    public static void computeStatistics() {
         Iterator<Integer> tableIt = Database.getCatalog().tableIdIterator();
 
         System.out.println("Computing table stats.");
@@ -85,8 +85,9 @@ public class TableStats {
      *            The cost per page of IO. This doesn't differentiate between
      *            sequential-scan IO and disk seeks.
      */
-    public TableStats(int tableid, int ioCostPerPage) throws IOException, DbException, TransactionAbortedException {
-
+    public TableStats(int tableid, int ioCostPerPage) {
+        //return;
+        //System.out.println("constructor");
         try {
        
         cost=ioCostPerPage;
@@ -169,16 +170,16 @@ public class TableStats {
             }
         t.commit();
     }
-    catch (DbException ex) {
-        throw ex;
+    catch (Exception ex) {
+        System.out.println("Error");
     }
-    catch (TransactionAbortedException ex) {
-        throw ex;
+    // catch (TransactionAbortedException ex) {
+    //     System.out.println("Error");
 
-     }
-     catch (IOException ex) {
-         throw ex;
-     }
+    //  }
+    //  catch (IOException ex) {
+    //      System.out.println("Error");
+    //  }
 
 
         
