@@ -9,11 +9,16 @@ public class Join extends Operator {
 
     private static final long serialVersionUID = 1L;
 
-    private JoinPredicate pred;
-    private DbIterator child1, child2;
-    private TupleDesc comboTD;
-    private Tuple t1 = null;
-    
+    private JoinPredicate p_;
+
+    public DbIterator child1_;
+
+    public DbIterator child2_;
+
+    public Tuple tuple1;
+
+
+
     /**
      * Constructor. Accepts to children to join and the predicate to join them
      * on
@@ -26,16 +31,13 @@ public class Join extends Operator {
      *            Iterator for the right(inner) relation to join
      */
     public Join(JoinPredicate p, DbIterator child1, DbIterator child2) {
-        // some code goes here
-	this.pred = p;
-	this.child1 = child1;
-	this.child2 = child2;
-	comboTD = TupleDesc.merge(child1.getTupleDesc(), child2.getTupleDesc());
+        p_ = p;
+        child1_ = child1;
+        child2_ = child2;
     }
 
     public JoinPredicate getJoinPredicate() {
-        // some code goes here
-        return pred;
+        return p_;
     }
 
     /**
@@ -44,8 +46,8 @@ public class Join extends Operator {
      *       alias or table name. Can be taken from the appropriate child's TupleDesc.
      * */
     public String getJoinField1Name() {
-        // some code goes here
-        return this.child1.getTupleDesc().getFieldName(this.pred.getField1());
+        //child1_.getTupleDesc();
+        return null;
     }
 
     /**
@@ -54,8 +56,8 @@ public class Join extends Operator {
      *       alias or table name. Can be taken from the appropriate child's TupleDesc.
      * */
     public String getJoinField2Name() {
-        // some code goes here
-        return this.child2.getTupleDesc().getFieldName(this.pred.getField2());
+        //child2_.getTupleDesc();
+        return null;
     }
 
     /**
@@ -64,29 +66,27 @@ public class Join extends Operator {
      *      implementation logic.
      */
     public TupleDesc getTupleDesc() {
-        // some code goes here
-        return comboTD;
+        return TupleDesc.merge(child1_.getTupleDesc(), child2_.getTupleDesc());
+
     }
 
     public void open() throws DbException, NoSuchElementException,
             TransactionAbortedException {
-        // some code goes here
-	child1.open();
-	child2.open();
-	super.open();
+        child1_.open();
+        child2_.open();
+        super.open();
+        
     }
 
     public void close() {
-        // some code goes here
-	super.close();
-	child2.close();
-	child1.close();
+        super.close();
+        child1_.close();
+        child2_.close();
     }
 
     public void rewind() throws DbException, TransactionAbortedException {
-        // some code goes here
-	child1.rewind();
-	child2.rewind();
+        child1_.rewind();
+        child2_.rewind();
     }
 
     /**
@@ -108,42 +108,56 @@ public class Join extends Operator {
      * @see JoinPredicate#filter
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
-        // some code goes here
+       
+       int counter = 0;
+       Tuple newTuple;
+        if (child1_.hasNext() && tuple1 == null){
+            tuple1 = child1_.next();
+        }
 
-	// loop around child1
-	while (t1 != null || child1.hasNext()) {
-	    if (t1 == null) {
-		assert child1.hasNext();
-		t1 = child1.next();
-	    }
+        while(tuple1!=null){
+            if (child2_.hasNext()==false){
 
-	    // loop around child2
-	    while (child2.hasNext()) {
-		Tuple t2 = child2.next();
+            	if(child1_.hasNext()) {
+            		tuple1 = child1_.next();
+            		child2_.rewind();
+            	}
+            	else{
+            		tuple1=null;
+            	}
 
-		// if match, create a combined tuple and fill it with the values
-		// from both tuples
-		if (!pred.filter(t1, t2))
-		    continue;
+            }
+            while(child2_.hasNext()){
+                Tuple tuple2 = child2_.next();
+                if (getJoinPredicate().filter(tuple1, tuple2)){
 
-		int td1n = t1.getTupleDesc().numFields();
-		int td2n = t2.getTupleDesc().numFields();
+                    newTuple = new Tuple(getTupleDesc());
 
-		// set fields in combined tuple
-		Tuple t = new Tuple(comboTD);
-		for (int i = 0; i < td1n; i++)
-		    t.setField(i, t1.getField(i));
-		for (int i = 0; i < td2n; i++)
-		    t.setField(td1n + i, t2.getField(i));
-		return t;
-	    }
+                    Iterator<Field> iter1 = tuple1.fields();
+                    Iterator<Field> iter2 = tuple2.fields();
 
-	    // child2 is done: advance child1
-	    t1 = null;
-	    child2.rewind();
-	}
+                    while(iter1.hasNext()){
+                        
+                        newTuple.setField(counter, iter1.next());
+                        counter++;
+                    }
 
-	return null;
+                    while(iter2.hasNext()){
+                        newTuple.setField(counter, iter2.next());
+                        counter++;
+                    }
+
+
+
+                    return newTuple;
+                 
+                }
+
+            }
+           
+            
+        }
+       return null;
     }
 
     /**
@@ -151,8 +165,10 @@ public class Join extends Operator {
      */
     @Override
     public DbIterator[] getChildren() {
-        // some code goes here
-        return new DbIterator[] { this.child1, this.child2 };
+        
+        return new DbIterator[] {this.child1_, this.child2_};
+        
+      
     }
 
     /**
@@ -160,9 +176,18 @@ public class Join extends Operator {
      */
     @Override
     public void setChildren(DbIterator[] children) {
-        // some code goes here
-	this.child1 = children[0];
-	this.child2 = children[1];
-    }
+        if (this.child1_!=children[0]){
+            this.child1_=children[0];
+
+        }
+
+        if (this.child2_!=children[1]){
+            this.child2_ = children[1];
+        }
+
+
+    
+
+}
 
 }
