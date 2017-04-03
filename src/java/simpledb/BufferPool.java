@@ -400,10 +400,10 @@ public class BufferPool {
      */
     private synchronized boolean locked(TransactionId tid, PageId pid, Permissions perm) {
         
-        if (pidLocks.get(pid) == null) {
+        if (pidLocks.get(pid) == null) { //no other transaction ids have locks on it
             return false;
         }
-        else{
+        else {
             if (perm == Permissions.READ_ONLY) {
                 if (tidLocks.get(tid).contains(pid)) {
                     return false;
