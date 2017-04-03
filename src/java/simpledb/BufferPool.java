@@ -299,6 +299,33 @@ public class BufferPool {
     pages.remove(pid);
     }
     
+    private class TransactionPermission{
+
+        private TransactionId tid_;
+        private Permissions perm_;
+
+        private TransactionPermission(TransactionId tid, Permissions perm){
+            tid_ = tid;
+            perm_ = perm;
+
+        }
+
+        public TransactionId getTid(){
+            return tid_;
+        }
+
+        public Permissions getPerm(){
+            return perm_;
+        }
+
+        public boolean equals(TransactionPermission p) {
+            if(tid_.equals(p.getTid()) && perm_.equals(p.getPerm()))
+            return true;
+
+            return false;
+        }
+
+    }
     /**
      * Manages locks on PageIds held by TransactionIds.
      * S-locks and X-locks are represented as Permissions.READ_ONLY and Permisions.READ_WRITE, respectively
@@ -311,7 +338,7 @@ public class BufferPool {
     final int LOCK_WAIT = 10;       // milliseconds
     Map<TransactionId, ArrayList<PageId>> tidLocks;
     Map<PageId, ArrayList<TransactionId>> pidLocks;
-    Map<PageId, ArrayList<Permissions>> pidPerms;
+    Map<PageId, ArrayList<TransactionPermission>> pidPerms;
     /**
      * Sets up the lock manager to keep track of page-level locks for transactions
      * Should initialize state required for the lock table data structure(s)
@@ -319,7 +346,7 @@ public class BufferPool {
     private LockManager() {
         tidLocks = new HashMap<TransactionId, ArrayList<PageId>>();
         pidLocks = new HashMap<PageId, ArrayList<TransactionId>>();
-        pidPerms = new HashMap<PageId, ArrayList<Permissions>>();
+        pidPerms = new HashMap<PageId, ArrayList<TransactionPermission>>();
         
     }
     
@@ -400,28 +427,43 @@ public class BufferPool {
      */
     private synchronized boolean locked(TransactionId tid, PageId pid, Permissions perm) {
         
+        //false is yes, true is no
         if (pidLocks.get(pid) == null) { //no other transaction ids have locks on it
             return false;
         }
         else {
             if (perm == Permissions.READ_ONLY) {
-                if (tidLocks.get(tid).contains(pid)) {
+                if (tidLocks.get(tid).contains(pid)) { //if tid is holding any lock on pid, return false
                     return false;
                 }
-                for (Permissions p:pidPerms.get(pid)) {
-                    if (p == Permissions.READ_WRITE) {
-                        return true;
+
+                //exclusive lock boolean
+                for (TransactionPermission p:pidPerms.get(pid)) {
+                    if (!p.getTid().equals(tid)) {
+                        if (p.getPerm() == Permissions.READ_WRITE) {
+                            return true;
+                        }
                     }
+                
+
                 }
                 return false;
-
             }
             else {
-                for (TransactionId t:pidLocks.get(pid)) {
-                    if (!t.equals(tid)) {
-                        return true;
+                for (TransactionPermission t:pidPerms.get(pid)) {
+                    if (!t.getTid().equals(tid)) {
+                        //if somebody else has a read lock, return true
+                       return true;
+
+                    }
+                    else if(t.getTid().equals(tid)){
+                        if(t.getPerm() == Permissions.READ_WRITE){
+                            return false;
+                        }
                     }
                 }
+               
+                
                 return false;
             }
         }
@@ -438,6 +480,12 @@ public class BufferPool {
      */
     public synchronized void releaseLock(TransactionId tid, PageId pid) {
         tidLocks.get(tid).remove(pid);   
+        pidLocks.get(pid).remove(tid);
+        // TransactionPermission tp = new TransactionPermission(tid, pid);
+        // pidPerms.get(pid).remove(tp);
+        //for transaction permissions in pidPerms
+        //  if tid = tid_
+        //      then remove
     }
     
     
@@ -471,11 +519,13 @@ public class BufferPool {
             }
 
             if (pidPerms.get(pid) == null) {
-                pidPerms.put(pid, new ArrayList<Permissions>());
-                pidPerms.get(pid).add(perm);
+                pidPerms.put(pid, new ArrayList<TransactionPermission>());
+                TransactionPermission newTP = new TransactionPermission(tid, perm);
+                pidPerms.get(pid).add(newTP);
             }
             else{
-                pidPerms.get(pid).add(perm);
+               TransactionPermission newTP = new TransactionPermission(tid, perm);
+                pidPerms.get(pid).add(newTP);
             }            
 
             return true;

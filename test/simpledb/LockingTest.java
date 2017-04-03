@@ -5,6 +5,10 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import junit.framework.JUnit4TestAdapter;
+import java.io.*;
+import java.util.*;
+import java.lang.*;
+
 
 public class LockingTest extends TestUtil.CreateHeapFile {
   private PageId p0, p1, p2;
@@ -16,10 +20,12 @@ public class LockingTest extends TestUtil.CreateHeapFile {
   // just so we have a pointer shorter than Database.getBufferPool()
   private BufferPool bp;
 
+  //System.out.println("before setUP");
   /**
    * Set up initial resources for each unit test.
    */
   @Before public void setUp() throws Exception {
+    //System.out.println("starting setUP");
     super.setUp();
 
     // clear all state from the buffer pool
@@ -49,6 +55,7 @@ public class LockingTest extends TestUtil.CreateHeapFile {
     bp.flushAllPages();
     bp = Database.resetBufferPool(BufferPool.DEFAULT_PAGES);
   }
+   //System.out.println("finished setUP");
 
   /**
    * Generic unit test structure for BufferPool.getPage() assuming locking.
