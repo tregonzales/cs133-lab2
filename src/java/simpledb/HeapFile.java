@@ -18,8 +18,9 @@ public class HeapFile implements DbFile {
     private final File f;
     private final TupleDesc td;
     private final int tableid ;
-	//private RandomAccessFile;
 
+    private volatile int lastEmptyPage = -1;
+    
     /**
      * Constructs a heap file backed by the specified file.
      * 
@@ -28,10 +29,10 @@ public class HeapFile implements DbFile {
      *            file.
      */
     public HeapFile(File f, TupleDesc td) {
-        // some code goes here
-        this.f = f;
-        this.tableid = f.getAbsoluteFile().hashCode();
-        this.td = td;
+	// some code goes here
+	this.f = f;
+	this.tableid = f.getAbsoluteFile().hashCode();
+	this.td = td;
     }
 
     /**
@@ -40,8 +41,8 @@ public class HeapFile implements DbFile {
      * @return the File backing this HeapFile on disk.
      */
     public File getFile() {
-        // some code goes here
-    	return f;
+	// some code goes here
+	return f;
     }
 
     /**
@@ -54,8 +55,8 @@ public class HeapFile implements DbFile {
      * @return an ID uniquely identifying this HeapFile.
      */
     public int getId() {
-        // some code goes here
-    	return tableid;
+	// some code goes here
+	return tableid;
     }
 
     /**
@@ -64,156 +65,151 @@ public class HeapFile implements DbFile {
      * @return TupleDesc of this DbFile.
      */
     public TupleDesc getTupleDesc() {
-        // some code goes here
-    	return td;
+	// some code goes here
+	return td;
     }
 
     // see DbFile.java for javadocs
     public Page readPage(PageId pid) {
-        // some code goes here
-    	HeapPageId id = (HeapPageId) pid;
-        BufferedInputStream bis = null;
+	// some code goes here
+	HeapPageId id = (HeapPageId) pid;
+	BufferedInputStream bis = null;
 
-        try {
-            bis = new BufferedInputStream(new FileInputStream(f));
-            byte pageBuf[] = new byte[BufferPool.PAGE_SIZE];
-            if (bis.skip(id.pageNumber() * BufferPool.PAGE_SIZE) != id
-                    .pageNumber() * BufferPool.PAGE_SIZE) {
-                throw new IllegalArgumentException(
-                        "Unable to seek to correct place in heapfile");
-            }
-            int retval = bis.read(pageBuf, 0, BufferPool.PAGE_SIZE);
-            if (retval == -1) {
-                throw new IllegalArgumentException("Read past end of table");
-            }
-            if (retval < BufferPool.PAGE_SIZE) {
-                throw new IllegalArgumentException("Unable to read "
-                        + BufferPool.PAGE_SIZE + " bytes from heapfile");
-            }
-            HeapPage p = new HeapPage(id, pageBuf);
-            return p;
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } finally {
-            // Close the file on success or error
-            try {
-                if (bis != null)
-                    bis.close();
-            } catch (IOException ioe) {
-                // Ignore failures closing the file
-            }
-        }
+	try {
+	    bis = new BufferedInputStream(new FileInputStream(f));
+	    byte pageBuf[] = new byte[BufferPool.PAGE_SIZE];
+	    if (bis.skip(id.pageNumber() * BufferPool.PAGE_SIZE) != id
+		.pageNumber() * BufferPool.PAGE_SIZE) {
+		throw new IllegalArgumentException(
+						   "Unable to seek to correct place in heapfile");
+	    }
+	    int retval = bis.read(pageBuf, 0, BufferPool.PAGE_SIZE);
+	    if (retval == -1) {
+		throw new IllegalArgumentException("Read past end of table");
+	    }
+	    if (retval < BufferPool.PAGE_SIZE) {
+		throw new IllegalArgumentException("Unable to read "
+						   + BufferPool.PAGE_SIZE + " bytes from heapfile");
+	    }
+	    HeapPage p = new HeapPage(id, pageBuf);
+	    return p;
+	} catch (IOException e) {
+	    throw new RuntimeException(e);
+	} finally {
+	    // Close the file on success or error
+	    try {
+		if (bis != null)
+		    bis.close();
+	    } catch (IOException ioe) {
+		// Ignore failures closing the file
+	    }
+	}
     }
 
     // see DbFile.java for javadocs
     public void writePage(Page page) throws IOException {
+	// some code goes here
+	// not necessary for lab1
 
-        //random access file
-        
-        HeapPage ourPage = (HeapPage) page;
-        HeapPageId id = ourPage.getId();
-       
-       
-        
-        byte pageBuf[] = ourPage.getPageData();
-            
-       
-
-        RandomAccessFile ourRaf = new RandomAccessFile(f, "rw");
-        long offset = (long)(id.pageNumber() * BufferPool.PAGE_SIZE);
-        ourRaf.seek(offset);
-        ourRaf.write(pageBuf);
-
-
+	HeapPage p = (HeapPage) page;
+	byte[] data = p.getPageData();
+	RandomAccessFile rf = new RandomAccessFile(f, "rw");
+	rf.seek(p.getId().pageNumber() * BufferPool.PAGE_SIZE);
+	rf.write(data);
+	rf.close();
     }
 
     /**
      * Returns the number of pages in this HeapFile.
      */
     public int numPages() {
-        // some code goes here
-    	return (int) (f.length() / BufferPool.PAGE_SIZE);
+	// some code goes here
+	return (int) (f.length() / BufferPool.PAGE_SIZE);
     }
 
     // see DbFile.java for javadocs
     public ArrayList<Page> insertTuple(TransactionId tid, Tuple t)
-            throws DbException, IOException, TransactionAbortedException {
+	throws DbException, IOException, TransactionAbortedException {
+	// some code goes here
+       
+	// not necessary for lab1
+	ArrayList<Page> dirtypages = new ArrayList<Page>();
 
-        ArrayList<Page> pageArray = new ArrayList<Page>();
-        int i;
-        for (i = 0; i < numPages(); i++) {
-                    HeapPageId curpid = new HeapPageId(getId(), i);
-                    HeapPage curp = (HeapPage) Database.getBufferPool().getPage(tid,
-                            curpid, Permissions.READ_WRITE);
-                    if (curp.getNumEmptySlots() > 0){
-                        curp.insertTuple(t);
-                        pageArray.add(curp);
-                        return pageArray;
-                    }
+	// find the first page with a free slot in it
+	int i = 0;
+	if (lastEmptyPage != -1)
+	    i = lastEmptyPage;
 
-        }
-        byte[] data = HeapPage.createEmptyPageData();
-        HeapPageId newPageId = new HeapPageId(getId(), numPages());
-        File ourFile = getFile();
-        FileOutputStream fw = null;
-        try{
-            fw = new FileOutputStream(ourFile, true);
-            fw.write(data);
-            HeapPage curp = (HeapPage) Database.getBufferPool().getPage(tid,
-                            newPageId, Permissions.READ_WRITE);
-            curp.insertTuple(t);
-            pageArray.add(curp);
-            return pageArray;
-        }
-        catch(IOException e){
+	for (; i < numPages(); i++) {
+	    HeapPageId pid = new HeapPageId(tableid, i);
 
-        }finally{
-            
-            fw.close();
+	    HeapPage p = (HeapPage) Database.getBufferPool().getPage(tid, pid,
+								     Permissions.READ_WRITE);
 
-            
-        }
-    throw new DbException("Can't be added scrubs'");
+	    // no empty slots
+	    if (p.getNumEmptySlots() == 0) {
+		if (lastEmptyPage != -1) {
+		    lastEmptyPage = -1;
+		    break;
+		}
+		continue;
+	    }
 
-    }
+	    // found a slot
+	    p.insertTuple(t);
+	    lastEmptyPage = p.getId().pageNumber();
+	    dirtypages.add(p);
+	    return dirtypages;
+	}
+    //when and how do we release lock?
+    //Database.getBufferPool().releasePage(tid, ? )
     
+	// never found a slot, have to get to create a new page in this file
+	synchronized (this) {
+	    BufferedOutputStream bw = new BufferedOutputStream(
+							       new FileOutputStream(f, true));
+	    byte[] emptyData = HeapPage.createEmptyPageData();
+	    bw.write(emptyData);
+	    bw.close();
+	}
+
+	// now let's try to get our freshly created page via the buffer pool
+	HeapPage p = (HeapPage) Database.getBufferPool()
+	    .getPage(tid, new HeapPageId(tableid, numPages() - 1),
+		     Permissions.READ_WRITE);
+	p.insertTuple(t);
+	lastEmptyPage = p.getId().pageNumber();
+	dirtypages.add(p);
+	return dirtypages;
+    }
 
     // see DbFile.java for javadocs
     public ArrayList<Page> deleteTuple(TransactionId tid, Tuple t) throws DbException,
-            TransactionAbortedException {
-        boolean treThing = true;
-        ArrayList<Page> pageArray = new ArrayList<Page>();
-        int i;
-
-        int tabId = t.getRecordId().getPageId().getTableId();
-        HeapPage curp = (HeapPage) Database.getBufferPool().getPage(tid,
-                            t.getRecordId().getPageId(), Permissions.READ_ONLY);
-        
-                        try{
-                            curp.deleteTuple(t);
-                        }
-                        catch(DbException e){
-                            treThing = false;
-                        }
-                        if (treThing == true){
-                            pageArray.add(curp);
-                            return pageArray;
-                        }
-
-
-        throw new DbException("It's not here, you fool'");
+									  TransactionAbortedException {
+	// some code goes here
+	
+	// not necessary for lab1
+	HeapPage p = (HeapPage) Database.getBufferPool().getPage(
+								 tid,
+								 new HeapPageId(tableid, t.getRecordId().getPageId()
+										.pageNumber()), Permissions.READ_WRITE);
+	p.deleteTuple(t);
+	ArrayList<Page> dirtypages = new ArrayList<Page>();
+	dirtypages.add(p);
+	return dirtypages;
     }
 
     // see DbFile.java for javadocs
     public DbFileIterator iterator(TransactionId tid) {
-        // some code goes here
-    	return new HeapFileIterator(this, tid);
+	// some code goes here
+	return new HeapFileIterator(this, tid);
     }
 
 }
+
 class HeapFileIterator implements DbFileIterator {
 
-	private Tuple next = null;
+    private Tuple next = null;
     Iterator<Tuple> it = null;
     int curpgno = 0;
 
@@ -221,58 +217,58 @@ class HeapFileIterator implements DbFileIterator {
     HeapFile hf;
 
     public HeapFileIterator(HeapFile hf, TransactionId tid) {
-        this.hf = hf;
-        this.tid = tid;
+	this.hf = hf;
+	this.tid = tid;
     }
 
     public void open() throws DbException, TransactionAbortedException {
-        curpgno = -1;
+	curpgno = -1;
     }
-    
-	public boolean hasNext() throws DbException, TransactionAbortedException {
-        if (next == null) next = readNext();
-        return next != null;
+
+    public boolean hasNext() throws DbException, TransactionAbortedException {
+	if (next == null) next = readNext();
+	return next != null;
     }
 
     public Tuple next() throws DbException, TransactionAbortedException,
-            NoSuchElementException {
-        if (next == null) {
-            next = readNext();
-            if (next == null) throw new NoSuchElementException();
-        }
+			       NoSuchElementException {
+	if (next == null) {
+	    next = readNext();
+	    if (next == null) throw new NoSuchElementException();
+	}
 
-        Tuple result = next;
-        next = null;
-        return result;
+	Tuple result = next;
+	next = null;
+	return result;
     }
 
     Tuple readNext() throws TransactionAbortedException, DbException {
-        if (it != null && !it.hasNext())
-            it = null;
+	if (it != null && !it.hasNext())
+	    it = null;
 
-        while (it == null && curpgno < hf.numPages() - 1) {
-            curpgno++;
-            HeapPageId curpid = new HeapPageId(hf.getId(), curpgno);
-            HeapPage curp = (HeapPage) Database.getBufferPool().getPage(tid,
-                    curpid, Permissions.READ_ONLY);
-            it = curp.iterator();
-            if (!it.hasNext())
-                it = null;
-        }
+	while (it == null && curpgno < hf.numPages() - 1) {
+	    curpgno++;
+	    HeapPageId curpid = new HeapPageId(hf.getId(), curpgno);
+	    HeapPage curp = (HeapPage) Database.getBufferPool().getPage(tid,
+									curpid, Permissions.READ_ONLY);
+	    it = curp.iterator();
+	    if (!it.hasNext())
+		it = null;
+	}
 
-        if (it == null)
-            return null;
-        return it.next();
+	if (it == null)
+	    return null;
+	return it.next();
     }
 
     public void rewind() throws DbException, TransactionAbortedException {
-        close();
-        open();
+	close();
+	open();
     }
 
     public void close() {
-    	next = null;
-        it = null;
-        curpgno = Integer.MAX_VALUE;
+	next = null;
+	it = null;
+	curpgno = Integer.MAX_VALUE;
     }
 }
