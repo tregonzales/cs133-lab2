@@ -427,15 +427,19 @@ public class BufferPool {
      */
     private synchronized boolean locked(TransactionId tid, PageId pid, Permissions perm) {
 
+
         
         if(perm == Permissions.READ_ONLY){
-            if(tidLocks.get(tid) == null){
-                //do nothing
-            }
-            else{
+            // if(tidLocks.get(tid) == null){ //this prevents us from getting to other case below
+            //     //do nothing
+            // }
+            //else{
+            if(tidLocks.get(tid) != null) {
                 if(tidLocks.get(tid).contains(pid)){
                     return false;
                 }
+            }
+            if(pidLocks.get(pid) != null) {
                 for(TransactionPermission p: pidPerms.get(pid)){
                     if(!p.getTid().equals(tid)){
                         if(p.getPerm() == Permissions.READ_ONLY){
@@ -448,6 +452,7 @@ public class BufferPool {
                 }
             }
         }
+        //}
         else{
             if(pidPerms.get(pid) == null){
                 //do nothing
@@ -486,12 +491,16 @@ return false;
     public synchronized void releaseLock(TransactionId tid, PageId pid) {
         tidLocks.get(tid).remove(pid);   
         pidLocks.get(pid).remove(tid);
-        
+
+        //create arraylist of items to remove b/c concurent problem
+        ArrayList<TransactionPermission> toRemove = new ArrayList<TransactionPermission>();
+
         for(TransactionPermission p: pidPerms.get(pid)){
             if(tid.equals(p.getTid())){
-                pidPerms.get(pid).remove(p);
+                toRemove.add(p);
             }
         }
+        pidPerms.get(pid).removeAll(toRemove);
     }
     
     
