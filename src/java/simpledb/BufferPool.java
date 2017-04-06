@@ -416,12 +416,11 @@ public class BufferPool {
      */
     public synchronized void releaseAllLocks(TransactionId tid) {
         ArrayList<PageId> dat = tidLocks.get(tid);
-        // tidLocks.remove(tid);
+        
         for(PageId p: dat){
             releaseLock(tid, p);
         }
-
-        
+           
     }
     
     
