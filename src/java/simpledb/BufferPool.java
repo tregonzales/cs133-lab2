@@ -142,8 +142,16 @@ public class BufferPool {
      */
     public void transactionComplete(TransactionId tid, boolean commit)
     throws IOException {
-    // some code goes here
-    // not necessary for lab1|lab2
+    
+    if(commit){
+        flushPages(tid);
+    }
+    else{
+        ArrayList<PageId> dis = lockmgr.getTidLocks().get(tid);
+        for(PageId p: dis){
+            discardPage(p);
+        }
+    }
     
     
     // after dealing with commit vs. abort actions, ask lock manager to release locks
@@ -349,6 +357,18 @@ public class BufferPool {
         pidPerms = new HashMap<PageId, ArrayList<TransactionPermission>>();
         
     }
+
+    public Map<TransactionId, ArrayList<PageId>> getTidLocks(){
+        return tidLocks;
+    }
+
+    public Map<PageId, ArrayList<TransactionId>> getPidLocks(){
+        return pidLocks;
+    }
+
+    public Map<PageId, ArrayList<TransactionPermission>> getPidPerms(){
+        return pidPerms;
+    } 
     
     
     /**
@@ -395,7 +415,12 @@ public class BufferPool {
      * This method is used by BufferPool.transactionComplete()
      */
     public synchronized void releaseAllLocks(TransactionId tid) {
-        // some code here
+        ArrayList<PageId> dat = tidLocks.get(tid);
+        // tidLocks.remove(tid);
+        for(PageId p: dat){
+            releaseLock(tid, p);
+        }
+
         
     }
     

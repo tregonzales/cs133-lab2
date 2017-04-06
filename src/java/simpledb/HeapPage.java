@@ -19,7 +19,7 @@ public class HeapPage implements Page {
     final Tuple tuples[];
     final int numSlots;
 
-    public boolean dirty_ = false;
+    public boolean dirty_;
 
     //the tid responsible for marking page dirty
     public TransactionId tid_;
