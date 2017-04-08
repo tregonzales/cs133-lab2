@@ -402,7 +402,7 @@ public class BufferPool {
             if(!b){
             try {
             //wait to get the lock
-            Thread.sleep(500); 
+            Thread.sleep(100); 
              } catch (InterruptedException e) { 
                  // do nothing
              }
