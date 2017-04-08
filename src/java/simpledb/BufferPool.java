@@ -145,9 +145,15 @@ public class BufferPool {
     
     if(commit){
         ArrayList<PageId> dis = lockmgr.getTidLocks().get(tid);
-        for(PageId p: dis){
-            flushPage(p);
+        if(dis == null){
+            //do nothing
         }
+        else{
+            for(PageId p: dis){
+            flushPage(p);
+            }
+        }
+        
     }
     else{
         ArrayList<PageId> dis = lockmgr.getTidLocks().get(tid);
@@ -389,27 +395,57 @@ public class BufferPool {
     public boolean acquireLock(TransactionId tid, PageId pid, Permissions perm)
         throws DeadlockException {
         
-        while(!lock(tid, pid, perm)) { // keep trying to get the lock
-        
-        synchronized(this) {
-            // you don't have the lock yet
-            // possibly some code here for Exercise 5, deadlock detection
+        boolean b;
+        b = lock(tid, pid, perm);
+
+        synchronized(this){
+            if(!b){
+            try {
+            //wait to get the lock
+            Thread.sleep(500); 
+             } catch (InterruptedException e) { 
+                 // do nothing
+             }
+             b = lock(tid, pid, perm);
+        }
+          if(!b){
+            throw new DeadlockException();
+        }
+        else {
+            return b;
+        }
         }
         
-        try {
-            // couldn't get lock, wait for some time, then try again
-            Thread.sleep(LOCK_WAIT); 
-        } catch (InterruptedException e) { // do nothing
-        }
+
         
-        }
+
+          
         
         
-        synchronized(this) {
-        // for Exercise 5, might need some cleanup on deadlock detection data structure
-        }
+
+    
+
+        // while(!lock(tid, pid, perm)) { // keep trying to get the lock
         
-        return true;
+        // synchronized(this) {
+        //     // you don't have the lock yet
+        //     // possibly some code here for Exercise 5, deadlock detection
+        // }
+        
+        // try {
+        //     // couldn't get lock, wait for some time, then try again
+        //     Thread.sleep(LOCK_WAIT); 
+        // } catch (InterruptedException e) { // do nothing
+        // }
+        
+        // }
+        
+        
+        // synchronized(this) {
+        // // for Exercise 5, might need some cleanup on deadlock detection data structure
+        // }
+        
+        // return true;
     }
     
     
@@ -418,12 +454,19 @@ public class BufferPool {
      * This method is used by BufferPool.transactionComplete()
      */
     public synchronized void releaseAllLocks(TransactionId tid) {
-       PageId[] dat = new PageId[tidLocks.get(tid).size()];
-       dat = tidLocks.get(tid).toArray(dat);
-        
-        for(PageId p: dat){
-            releaseLock(tid, p);
-        }
+       if(tidLocks.get(tid) == null){
+           //do nothing
+       }
+       else{
+           PageId[] dat = new PageId[tidLocks.get(tid).size()];
+       
+        dat = tidLocks.get(tid).toArray(dat);
+            
+            for(PageId p: dat){
+                releaseLock(tid, p);
+            }
+       }
+       
            
     }
     
