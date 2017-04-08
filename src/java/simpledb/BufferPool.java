@@ -144,12 +144,15 @@ public class BufferPool {
     throws IOException {
     
     if(commit){
-        flushPages(tid);
+        ArrayList<PageId> dis = lockmgr.getTidLocks().get(tid);
+        for(PageId p: dis){
+            flushPage(p);
+        }
     }
     else{
         ArrayList<PageId> dis = lockmgr.getTidLocks().get(tid);
         for(PageId p: dis){
-            discardPage(p);
+            pages.remove(p);
         }
     }
     
@@ -415,7 +418,8 @@ public class BufferPool {
      * This method is used by BufferPool.transactionComplete()
      */
     public synchronized void releaseAllLocks(TransactionId tid) {
-        ArrayList<PageId> dat = tidLocks.get(tid);
+       PageId[] dat = new PageId[tidLocks.get(tid).size()];
+       dat = tidLocks.get(tid).toArray(dat);
         
         for(PageId p: dat){
             releaseLock(tid, p);
