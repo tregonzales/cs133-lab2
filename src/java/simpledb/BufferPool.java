@@ -296,6 +296,7 @@ public class BufferPool {
     
     // try to evict a random page, focusing first on finding one that is not dirty
     // currently does not check for pages with uncommitted xacts, which could impact future labs
+    
     Object pids[] = pages.keySet().toArray();
     PageId pid = (PageId) pids[random.nextInt(pids.length)];
     
@@ -395,26 +396,32 @@ public class BufferPool {
     public boolean acquireLock(TransactionId tid, PageId pid, Permissions perm)
         throws DeadlockException {
         
-        boolean b;
+        boolean b = false;
         b = lock(tid, pid, perm);
+        int tries = 0;
 
-        synchronized(this){
-            if(!b){
+        while(!b){
+            
+            synchronized(this){
+                if(tries < 100){
+                    throw new DeadlockException();
+                }
+            }
+        
             try {
             //wait to get the lock
-            Thread.sleep(100); 
-             } catch (InterruptedException e) { 
-                 // do nothing
-             }
-             b = lock(tid, pid, perm);
+            Thread.sleep(LOCK_WAIT); 
+            } catch (InterruptedException e) { 
+                // do nothing
+            }
+            b = lock(tid, pid, perm);
+           
+            ++tries;
         }
-          if(!b){
-            throw new DeadlockException();
-        }
-        else {
-            return b;
-        }
-        }
+        return b;
+    }
+    
+
         
 
         
@@ -446,7 +453,7 @@ public class BufferPool {
         // }
         
         // return true;
-    }
+    
     
     
     /**
