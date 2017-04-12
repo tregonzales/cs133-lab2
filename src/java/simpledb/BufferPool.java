@@ -157,8 +157,13 @@ public class BufferPool {
     }
     else{
         ArrayList<PageId> dis = lockmgr.getTidLocks().get(tid);
-        for(PageId p: dis){
-            pages.remove(p);
+        if(dis == null) {
+            //do nothing
+        }
+        else{
+            for(PageId p: dis){
+                pages.remove(p);
+            }
         }
     }
     
@@ -310,7 +315,15 @@ public class BufferPool {
             }
         }
         }
-        flushPage(pid);
+
+        if (pages.get(pid).isDirty() == null) {
+             flushPage(pid);
+        }
+        else{
+            throw new DbException("everything is dirty, disgusting"); 
+        }  
+
+
     } catch (IOException e) {
         throw new DbException("could not evict page");
     }
@@ -403,7 +416,7 @@ public class BufferPool {
         while(!b){
             
             synchronized(this){
-                if(tries < 100){
+                if(tries > 100){
                     throw new DeadlockException();
                 }
             }
