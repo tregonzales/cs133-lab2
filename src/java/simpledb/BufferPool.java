@@ -410,65 +410,22 @@ public class BufferPool {
         throws DeadlockException {
         
         boolean b = false;
-        b = lock(tid, pid, perm);
+        b = lock(tid,pid,perm);
         int tries = 0;
-
-        while(!b){
-            
-            synchronized(this){
-                if(tries > 100){
-                    throw new DeadlockException();
-                }
-            }
-        
-            try {
-            //wait to get the lock
-            Thread.sleep(LOCK_WAIT); 
-            } catch (InterruptedException e) { 
-                // do nothing
-            }
-            b = lock(tid, pid, perm);
-           
-            ++tries;
+        while (!b) {
+        synchronized(this) {
+            if (tries > 10) throw new DeadlockException();
         }
-        return b;
-    }
-    
+        try {
+            Thread.sleep(LOCK_WAIT);
+        } catch (InterruptedException e) {
+        }
+        b = lock(tid,pid,perm);
+        ++tries;
+        }
 
-        
-
-        
-
-          
-        
-        
-
-    
-
-        // while(!lock(tid, pid, perm)) { // keep trying to get the lock
-        
-        // synchronized(this) {
-        //     // you don't have the lock yet
-        //     // possibly some code here for Exercise 5, deadlock detection
-        // }
-        
-        // try {
-        //     // couldn't get lock, wait for some time, then try again
-        //     Thread.sleep(LOCK_WAIT); 
-        // } catch (InterruptedException e) { // do nothing
-        // }
-        
-        // }
-        
-        
-        // synchronized(this) {
-        // // for Exercise 5, might need some cleanup on deadlock detection data structure
-        // }
-        
-        // return true;
-    
-    
-    
+        return true;
+        }
     /**
      * Release all locks corresponding to TransactionId tid.
      * This method is used by BufferPool.transactionComplete()
