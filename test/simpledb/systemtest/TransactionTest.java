@@ -208,30 +208,30 @@ public class TransactionTest extends SimpleDbTestBase {
     
     @Test public void testSingleThread()
             throws IOException, DbException, TransactionAbortedException {
-                System.out.println("test1");
+                //System.out.println("test1");
         validateTransactions(1);
-            System.out.println("test1 success");
+            //System.out.println("test1 success");
     }
 
     @Test public void testTwoThreads()
             throws IOException, DbException, TransactionAbortedException {
-                System.out.println("test2");
+                //System.out.println("test2");
         validateTransactions(2);
-        System.out.println("test2 success");
+        //System.out.println("test2 success");
     }
 
     @Test public void testFiveThreads()
             throws IOException, DbException, TransactionAbortedException {
-                System.out.println("test5");
+                //System.out.println("test5");
         validateTransactions(5);
-        System.out.println("test5 success");
+        //System.out.println("test5 success");
     }
     
     @Test public void testTenThreads()
     throws IOException, DbException, TransactionAbortedException {
-        System.out.println("test10");
+        //System.out.println("test10");
         validateTransactions(10);
-        System.out.println("test10 success");
+        //System.out.println("test10 success");
     }
 
     @Test public void testAllDirtyFails()
