@@ -413,19 +413,18 @@ public class BufferPool {
         b = lock(tid,pid,perm);
         int tries = 0;
         while (!b) {
-        synchronized(this) {
-            if (tries > 10) throw new DeadlockException();
+            synchronized(this) {
+                if (tries > 10) throw new DeadlockException();
+            }
+            try {
+                Thread.sleep(LOCK_WAIT);
+            } catch (InterruptedException e) {
+            }
+            b = lock(tid,pid,perm);
+            ++tries;
         }
-        try {
-            Thread.sleep(LOCK_WAIT);
-        } catch (InterruptedException e) {
-        }
-        b = lock(tid,pid,perm);
-        ++tries;
-        }
-
         return true;
-        }
+    }
     /**
      * Release all locks corresponding to TransactionId tid.
      * This method is used by BufferPool.transactionComplete()
@@ -478,10 +477,7 @@ public class BufferPool {
 
         
         if(perm == Permissions.READ_ONLY){
-            // if(tidLocks.get(tid) == null){ //this prevents us from getting to other case below
-            //     //do nothing
-            // }
-            //else{
+           
             if(tidLocks.get(tid) != null) {
                 if(tidLocks.get(tid).contains(pid)){
                     return false;
@@ -500,7 +496,7 @@ public class BufferPool {
                 }
             }
         }
-        //}
+        
         else{
             if(pidPerms.get(pid) == null){
                 //do nothing
@@ -519,13 +515,13 @@ public class BufferPool {
                 }
             
             }
-            return false; //are these sketch? unclear.
+            return false; 
             
         }
         return false;
     }
 return false;
-    }
+}
 
     
     /**
